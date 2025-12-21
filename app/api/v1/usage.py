@@ -37,7 +37,7 @@ class UsageResponse(BaseModel):
     details: list[UsageDetail] | None = None
 
 
-@router.get("/usage", response_model=UsageResponse)
+@router.get("", response_model=UsageResponse)
 async def get_usage(
     period: Literal["day", "week", "month"] = "month",
     include_details: bool = False,
@@ -49,7 +49,7 @@ async def get_usage(
     raise HTTPException(status_code=501, detail="Usage tracking not yet implemented.")
 
 
-@router.get("/usage/quota")
+@router.get("/quota")
 async def get_quota() -> dict[str, int | str]:
     """Get current quota status.
 

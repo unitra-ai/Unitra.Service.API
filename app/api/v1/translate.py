@@ -38,7 +38,7 @@ class BatchTranslateResponse(BaseModel):
     total_latency_ms: float
 
 
-@router.post("/translate", response_model=TranslateResponse)
+@router.post("", response_model=TranslateResponse)
 async def translate(request: TranslateRequest) -> TranslateResponse:
     """Translate text.
 
@@ -50,7 +50,7 @@ async def translate(request: TranslateRequest) -> TranslateResponse:
     )
 
 
-@router.post("/translate/batch", response_model=BatchTranslateResponse)
+@router.post("/batch", response_model=BatchTranslateResponse)
 async def translate_batch(request: BatchTranslateRequest) -> BatchTranslateResponse:
     """Translate multiple texts in a batch.
 

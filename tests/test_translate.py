@@ -21,7 +21,7 @@ async def test_translate_returns_501(async_client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_list_languages(async_client: AsyncClient) -> None:
     """Test list languages endpoint returns language list."""
-    response = await async_client.get("/api/v1/languages")
+    response = await async_client.get("/api/v1/translate/languages")
     assert response.status_code == 200
 
     data = response.json()
