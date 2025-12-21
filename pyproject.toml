@@ -32,6 +32,8 @@ ruff = "^0.1.0"
 mypy = "^1.8.0"
 bandit = "^1.7.0"
 httpx = "^0.26.0"
+pre-commit = "^3.6.0"
+commitizen = "^3.13.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -53,3 +55,16 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = [
+    "pyproject.toml:version"
+]
+tag_format = "v$version"
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+
+[tool.ruff.isort]
+known-first-party = ["app"]
