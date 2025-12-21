@@ -1,4 +1,4 @@
-# Deploy to Staging
+# Deploy to Staging (Dokploy on DigitalOcean)
 # Automatically deploys when code is pushed to main branch
 name: Deploy to Staging
 
@@ -11,13 +11,15 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  deploy:
-    name: Deploy to Staging
+  build:
+    name: Build & Push Image
     runs-on: ubuntu-latest
-    environment: staging
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,77 +34,110 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging
+            type=sha,prefix=staging-
+
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             GIT_COMMIT_SHA=${{ github.sha }}
 
-      # ============================================
-      # Option A: Deploy to Railway
-      # ============================================
-      - name: Deploy to Railway
-        if: ${{ vars.DEPLOY_TARGET == 'railway' }}
-        uses: bervProject/railway-deploy@main
-        with:
-          railway_token: ${{ secrets.RAILWAY_TOKEN }}
-          service: unitra-api-staging
+  deploy:
+    name: Deploy to Dokploy
+    runs-on: ubuntu-latest
+    needs: build
+    environment: staging
 
+    steps:
       # ============================================
-      # Option B: Deploy to Fly.io
+      # Option A: Webhook Trigger (Recommended)
       # ============================================
-      - name: Setup Fly.io CLI
-        if: ${{ vars.DEPLOY_TARGET == 'flyio' }}
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy to Fly.io
-        if: ${{ vars.DEPLOY_TARGET == 'flyio' }}
-        run: flyctl deploy --remote-only --app unitra-api-staging
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      # ============================================
-      # Option C: Deploy to Render
-      # ============================================
-      - name: Deploy to Render
-        if: ${{ vars.DEPLOY_TARGET == 'render' }}
+      - name: Trigger Dokploy Webhook
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          echo "Triggering Dokploy deployment..."
+
+          RESPONSE=$(curl -sf -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging",
+              "sha": "${{ github.sha }}"
+            }' || echo "failed")
+
+          if [ "$RESPONSE" = "failed" ]; then
+            echo "Webhook trigger failed, trying alternative method..."
+            # Fallback: just trigger without body
+            curl -sf -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" || exit 1
+          fi
+
+          echo "Deployment triggered successfully"
 
       # ============================================
-      # Post-deployment checks
+      # Option B: Dokploy API (Alternative)
       # ============================================
+      # - name: Deploy via Dokploy API
+      #   run: |
+      #     curl -sf -X POST "${{ vars.DOKPLOY_API_URL }}/api/application.redeploy" \
+      #       -H "Authorization: Bearer ${{ secrets.DOKPLOY_API_TOKEN }}" \
+      #       -H "Content-Type: application/json" \
+      #       -d '{
+      #         "applicationId": "${{ vars.DOKPLOY_APP_ID_STAGING }}"
+      #       }'
+
       - name: Wait for deployment
         run: sleep 60
 
-      - name: Run smoke tests
+      - name: Health check
         run: |
           HEALTH_URL="${{ vars.STAGING_API_URL }}/api/health"
           echo "Checking health at: $HEALTH_URL"
 
-          for i in {1..5}; do
-            if curl -sf "$HEALTH_URL"; then
+          for i in {1..10}; do
+            RESPONSE=$(curl -sf "$HEALTH_URL" 2>/dev/null || echo "")
+            if [ -n "$RESPONSE" ]; then
               echo "Health check passed!"
+              echo "$RESPONSE" | jq . 2>/dev/null || echo "$RESPONSE"
               exit 0
             fi
-            echo "Attempt $i failed, retrying in 10s..."
-            sleep 10
+            echo "Attempt $i/10 failed, retrying in 15s..."
+            sleep 15
           done
 
-          echo "Health check failed after 5 attempts"
+          echo "Health check failed after 10 attempts"
           exit 1
         continue-on-error: true
 
+      - name: Deployment summary
+        run: |
+          echo "## Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ vars.STAGING_API_URL }}" >> $GITHUB_STEP_SUMMARY
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [build, deploy]
+    if: always()
+
+    steps:
       - name: Notify on success
-        if: success()
+        if: needs.deploy.result == 'success'
         uses: 8398a7/action-slack@v3
         with:
           status: success
@@ -113,7 +148,7 @@ jobs:
         continue-on-error: true
 
       - name: Notify on failure
-        if: failure()
+        if: needs.deploy.result == 'failure'
         uses: 8398a7/action-slack@v3
         with:
           status: failure
