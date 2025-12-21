@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../app:/app/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://unitra:unitra@postgres:5432/unitra
+      - REDIS_URL=redis://redis:6379/0
+      - DEBUG=true
+      - ENVIRONMENT=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - unitra-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: unitra-api-postgres
+    environment:
+      POSTGRES_USER: unitra
+      POSTGRES_PASSWORD: unitra
+      POSTGRES_DB: unitra
+    ports:
+      - "5433:5432"  # Use 5433 to avoid conflict with Infrastructure postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unitra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - unitra-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: unitra-api-redis
+    ports:
+      - "6380:6379"  # Use 6380 to avoid conflict with Infrastructure redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - unitra-network
+
+networks:
+  unitra-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

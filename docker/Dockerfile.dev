@@ -1,0 +1,21 @@
+# Development Dockerfile with hot-reload
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Poetry
+RUN pip install poetry==1.7.1
+RUN poetry config virtualenvs.create false
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock* ./
+
+# Install all dependencies including dev
+RUN poetry install --no-interaction --no-ansi
+
+# Copy application (will be overridden by volume mount)
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

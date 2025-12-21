@@ -13,10 +13,13 @@ venv/
 # Environment
 .env
 .env.local
+.env.*.local
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
 # OS
 .DS_Store
@@ -24,3 +27,15 @@ venv/
 # Logs
 *.log
 logs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Type checking
+.mypy_cache/
+
+# Docker volumes
+docker/volumes/
