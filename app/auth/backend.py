@@ -1,6 +1,5 @@
 """JWT Authentication backend for FastAPI-Users."""
 
-from typing import Any
 from uuid import UUID
 
 from fastapi import Depends
@@ -11,6 +10,7 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users.jwt import generate_jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.manager import UserManager
@@ -63,7 +63,9 @@ class CustomJWTStrategy(JWTStrategy[User, UUID]):
             "tier": user.tier,
             "minutes_remaining": user.minutes_remaining,
         }
-        return self._encode_jwt(data)
+        return generate_jwt(
+            data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
+        )
 
 
 def get_jwt_strategy() -> CustomJWTStrategy:

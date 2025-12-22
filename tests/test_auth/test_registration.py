@@ -63,7 +63,9 @@ class TestRegistration:
         )
 
         assert response2.status_code == 400
-        assert "already exists" in response2.json().get("detail", "").lower()
+        # FastAPI-Users returns "REGISTER_USER_ALREADY_EXISTS"
+        detail = response2.json().get("detail", "").lower()
+        assert "already_exists" in detail or "already exists" in detail
 
     @pytest.mark.asyncio
     async def test_register_invalid_email(
@@ -81,7 +83,8 @@ class TestRegistration:
 
         assert response.status_code == 422
         data = response.json()
-        assert "detail" in data
+        # App uses custom error format with "error" key for validation errors
+        assert "detail" in data or "error" in data
 
     @pytest.mark.asyncio
     async def test_register_weak_password(

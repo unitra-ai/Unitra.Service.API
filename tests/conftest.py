@@ -20,6 +20,13 @@ from app.config import Settings, get_settings
 from app.db.base import Base
 from app.main import app
 
+# Import all models to register them with SQLAlchemy metadata
+# This ensures relationships are properly resolved when creating tables
+from app.auth.models import User  # noqa: F401
+from app.models.subscription import Subscription  # noqa: F401
+from app.models.refresh_token import RefreshToken  # noqa: F401
+from app.models.usage import UsageLog  # noqa: F401
+
 
 # =============================================================================
 # Environment Setup
@@ -122,13 +129,45 @@ def client() -> TestClient:
 
 
 @pytest_asyncio.fixture
-async def async_client() -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client."""
+async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
+    """Create an async test client with test database.
+
+    This fixture:
+    1. Creates an in-memory SQLite database with all tables
+    2. Overrides the get_db_session dependency to use the test database
+    3. Provides an async HTTP client for making requests
+    """
+    from app.db.session import get_db_session
+
+    # Create async session factory for test database
+    test_session_factory = async_sessionmaker(
+        bind=test_db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
+    async def override_get_db_session() -> AsyncGenerator[AsyncSession, None]:
+        async with test_session_factory() as session:
+            try:
+                yield session
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+
+    # Override the dependency
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
     ) as client:
         yield client
+
+    # Clear the override after tests
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
