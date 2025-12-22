@@ -13,10 +13,17 @@ api_router.include_router(
 )
 
 # V1 API routes
+# Authentication routes (FastAPI-Users)
 api_router.include_router(
     auth.router,
     prefix="/v1/auth",
     tags=["Authentication"],
+)
+# User management routes (FastAPI-Users)
+api_router.include_router(
+    auth.users_router,
+    prefix="/v1/users",
+    tags=["Users"],
 )
 api_router.include_router(
     translate.router,

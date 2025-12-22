@@ -34,6 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Integration tests (30 tests for API endpoints)
   - Logging tests (25 tests for structlog configuration)
 - Enhanced test fixtures in conftest.py (auth tokens, mock DB/Redis, async client)
+- FastAPI-Users authentication integration
+  - User model with UUID, tier, usage tracking, login tracking
+  - JWT authentication with custom claims (tier, minutes_remaining)
+  - UserManager with lifecycle hooks (register, login, password reset, verification)
+  - Auth routers: register, login, logout, forgot-password, reset-password, verify
+  - User management: /users/me, /users/{id} (superuser only)
+  - Custom endpoints: /auth/me/usage, /auth/me/tier/upgrade (placeholder), /auth/health
+  - Comprehensive auth tests (50+ tests covering all auth flows)
 
 ### Changed
 

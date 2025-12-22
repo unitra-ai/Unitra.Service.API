@@ -33,11 +33,16 @@ class Settings(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379/0"
 
-    # Security
-    secret_key: str = "your-secret-key-change-in-production"
+    # Security / JWT
+    secret_key: str = "your-secret-key-change-in-production-min-32-chars"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+
+    # FastAPI-Users token lifetimes
+    jwt_lifetime_seconds: int = 3600  # 1 hour
+    password_reset_token_lifetime_seconds: int = 3600  # 1 hour
+    verification_token_lifetime_seconds: int = 86400  # 24 hours
 
     # CORS
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:1420"]
@@ -49,6 +54,21 @@ class Settings(BaseSettings):
     # Stripe
     stripe_api_key: str = ""
     stripe_webhook_secret: str = ""
+
+    # OAuth2 (optional, for future social login)
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    github_client_id: str = ""
+    github_client_secret: str = ""
+    discord_client_id: str = ""
+    discord_client_secret: str = ""
+
+    # Email (placeholder for email verification/reset)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    email_from: str = "noreply@unitra.app"
 
 
 @lru_cache

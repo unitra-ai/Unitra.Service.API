@@ -1,15 +1,23 @@
 """Pytest fixtures and configuration for testing."""
 
+import asyncio
 import os
+from datetime import timedelta
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import StaticPool
 
 from app.config import Settings, get_settings
+from app.db.base import Base
 from app.main import app
 
 
@@ -26,6 +34,7 @@ def set_test_env() -> Generator[None, None, None]:
     os.environ["ENVIRONMENT"] = "test"
     os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only-not-for-production"
     os.environ["DEBUG"] = "true"
+    os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
     yield
 
@@ -45,8 +54,11 @@ def test_settings() -> Settings:
         environment="test",
         debug=True,
         secret_key="test-secret-key-for-testing-only-not-for-production",
-        database_url="postgresql+asyncpg://test:test@localhost:5432/test",
+        database_url="sqlite+aiosqlite:///:memory:",
         redis_url="redis://localhost:6379/0",
+        jwt_lifetime_seconds=3600,
+        password_reset_token_lifetime_seconds=3600,
+        verification_token_lifetime_seconds=86400,
     )
 
 
@@ -55,6 +67,47 @@ def mock_settings(test_settings: Settings) -> Generator[Settings, None, None]:
     """Mock get_settings to return test settings."""
     with patch("app.config.get_settings", return_value=test_settings):
         yield test_settings
+
+
+# =============================================================================
+# Database Fixtures for Testing
+# =============================================================================
+
+
+@pytest_asyncio.fixture
+async def test_db_engine():
+    """Create a test database engine using SQLite."""
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield engine
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def test_db_session(test_db_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create a test database session."""
+    async_session_factory = async_sessionmaker(
+        bind=test_db_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+
+    async with async_session_factory() as session:
+        yield session
+        await session.rollback()
 
 
 # =============================================================================
@@ -68,7 +121,7 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client."""
     async with AsyncClient(
@@ -131,7 +184,7 @@ def mock_redis() -> AsyncMock:
 
 
 # =============================================================================
-# Authentication Fixtures
+# Authentication Fixtures (FastAPI-Users)
 # =============================================================================
 
 
@@ -140,21 +193,16 @@ def valid_access_token() -> str:
     """Generate a valid access token for testing."""
     from app.core.security import create_access_token
 
-    return create_access_token(
-        subject="test-user-id",
-        additional_claims={"email": "test@example.com"},
-    )
+    return create_access_token(data={"sub": "test-user-id"})
 
 
 @pytest.fixture
 def expired_access_token() -> str:
     """Generate an expired access token for testing."""
-    from datetime import timedelta
-
     from app.core.security import create_access_token
 
     return create_access_token(
-        subject="test-user-id",
+        data={"sub": "test-user-id"},
         expires_delta=timedelta(seconds=-1),
     )
 
@@ -163,6 +211,14 @@ def expired_access_token() -> str:
 def auth_headers(valid_access_token: str) -> dict[str, str]:
     """Create authorization headers with valid token."""
     return {"Authorization": f"Bearer {valid_access_token}"}
+
+
+def get_auth_headers_for_user(user_id: str) -> dict[str, str]:
+    """Create authorization headers for a specific user."""
+    from app.core.security import create_access_token
+
+    token = create_access_token(data={"sub": user_id})
+    return {"Authorization": f"Bearer {token}"}
 
 
 # =============================================================================
@@ -183,16 +239,41 @@ def test_user_email() -> str:
 
 
 @pytest.fixture
+def test_user_password() -> str:
+    """Test user password."""
+    return "testpassword123"
+
+
+@pytest.fixture
 def mock_user(test_user_id: str, test_user_email: str) -> MagicMock:
     """Create a mock user object."""
     user = MagicMock()
     user.id = test_user_id
     user.email = test_user_email
     user.is_active = True
-    user.is_verified = True
-    user.tier = "FREE"
+    user.is_verified = False
+    user.is_superuser = False
+    user.tier = "free"
     user.hashed_password = "hashed_password"
+    user.translation_minutes_used = 0
+    user.translation_minutes_limit = 60
+    user.login_count = 0
+    user.last_login_at = None
     return user
+
+
+@pytest.fixture
+def verified_mock_user(mock_user: MagicMock) -> MagicMock:
+    """Create a mock verified user."""
+    mock_user.is_verified = True
+    return mock_user
+
+
+@pytest.fixture
+def superuser_mock_user(verified_mock_user: MagicMock) -> MagicMock:
+    """Create a mock superuser."""
+    verified_mock_user.is_superuser = True
+    return verified_mock_user
 
 
 # =============================================================================
@@ -228,3 +309,26 @@ def create_mock_response(status_code: int = 200) -> MagicMock:
 async def async_return(value):
     """Helper to create async return value."""
     return value
+
+
+# =============================================================================
+# Factory Fixtures for Auth Testing
+# =============================================================================
+
+
+@pytest.fixture
+def user_data_factory():
+    """Factory for creating user registration data."""
+
+    def _create_user_data(
+        email: str | None = None,
+        password: str = "testpassword123",
+        **kwargs,
+    ) -> dict:
+        return {
+            "email": email or f"user_{uuid4().hex[:8]}@example.com",
+            "password": password,
+            **kwargs,
+        }
+
+    return _create_user_data

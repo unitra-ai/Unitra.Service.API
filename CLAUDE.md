@@ -38,10 +38,36 @@ Request → RequestLoggingMiddleware (correlation ID, timing)
         → Router → Endpoint → Dependencies → Response
 ```
 
+### Authentication (FastAPI-Users)
+Authentication is handled by FastAPI-Users (`app/auth/`):
+- **User Model**: `app/auth/models.py` - UUID-based, with tier, usage tracking, login tracking
+- **Auth Backend**: `app/auth/backend.py` - JWT with custom claims (tier, minutes_remaining)
+- **UserManager**: `app/auth/manager.py` - Lifecycle hooks for register, login, password reset, verification
+
+**Auth Dependencies** (from `app/auth/backend.py`):
+- `current_user` - Active user required
+- `current_verified_user` - Active + verified user required
+- `current_superuser` - Superuser required
+- `optional_current_user` - Returns None if not authenticated
+
+**Auth Endpoints** (`/api/v1/auth/`):
+- `POST /jwt/login` - Login and get JWT
+- `POST /register` - User registration
+- `POST /forgot-password`, `POST /reset-password` - Password reset flow
+- `POST /request-verify-token`, `POST /verify` - Email verification flow
+- `GET /me/usage` - Usage statistics
+- `GET /health` - Auth system health check
+
+**User Endpoints** (`/api/v1/users/`):
+- `GET /me`, `PATCH /me` - Current user profile
+- `GET /{id}`, `PATCH /{id}`, `DELETE /{id}` - Superuser only
+
 ### Dependency Injection Pattern
 Endpoints use FastAPI's `Annotated` type aliases for clean dependency injection:
-- `CurrentUserId` - Requires valid JWT, returns user ID string
-- `OptionalUserId` - Returns user ID or None (no auth required)
+- `CurrentUserId` - Requires valid JWT, returns user ID string (legacy)
+- `OptionalUserId` - Returns user ID or None (legacy)
+- `current_user` - FastAPI-Users: Active user required
+- `current_verified_user` - FastAPI-Users: Verified user required
 - `DbSessionDep` - Async SQLAlchemy session
 - `RedisDep` - Redis client instance
 - `SettingsDep` - Application settings
