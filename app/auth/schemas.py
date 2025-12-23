@@ -83,3 +83,29 @@ class AuthHealthResponse(BaseModel):
     database: str = Field(description="Database connection status")
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class LogoutResponse(BaseModel):
+    """Response for logout request."""
+
+    success: bool = Field(description="Whether logout was successful")
+    message: str = Field(description="Status message")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request to refresh access token."""
+
+    refresh_token: str = Field(description="The refresh token")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RefreshTokenResponse(BaseModel):
+    """Response for token refresh request."""
+
+    access_token: str = Field(description="New access token")
+    token_type: str = Field(default="bearer", description="Token type")
+
+    model_config = ConfigDict(from_attributes=True)

@@ -135,9 +135,11 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
     This fixture:
     1. Creates an in-memory SQLite database with all tables
     2. Overrides the get_db_session dependency to use the test database
-    3. Provides an async HTTP client for making requests
+    3. Mocks Redis client for testing
+    4. Provides an async HTTP client for making requests
     """
     from app.db.session import get_db_session
+    from app.db.redis import get_redis, RedisClient
 
     # Create async session factory for test database
     test_session_factory = async_sessionmaker(
@@ -157,8 +159,23 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
                 await session.rollback()
                 raise
 
-    # Override the dependency
+    # Create a mock Redis client for testing
+    mock_redis = MagicMock(spec=RedisClient)
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.blacklist_token = AsyncMock()
+    mock_redis.is_token_blacklisted = AsyncMock(return_value=False)
+    mock_redis.delete_session = AsyncMock()
+    mock_redis.get_session = AsyncMock(return_value=None)
+    mock_redis.set_session = AsyncMock()
+    mock_redis.check_rate_limit = AsyncMock(return_value=(True, 99))
+    mock_redis.get_rate_limit_ttl = AsyncMock(return_value=60)
+
+    def override_get_redis() -> RedisClient:
+        return mock_redis
+
+    # Override the dependencies
     app.dependency_overrides[get_db_session] = override_get_db_session
+    app.dependency_overrides[get_redis] = override_get_redis
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
@@ -371,3 +388,43 @@ def user_data_factory():
         }
 
     return _create_user_data
+
+
+@pytest_asyncio.fixture
+async def registered_user(async_client: AsyncClient) -> dict:
+    """Create and register a test user, returning their credentials."""
+    email = f"testuser_{uuid4().hex[:8]}@example.com"
+    password = "testpassword123"
+
+    response = await async_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": email,
+            "password": password,
+        },
+    )
+    assert response.status_code == 201
+
+    return {
+        "email": email,
+        "password": password,
+        "user": response.json(),
+    }
+
+
+@pytest_asyncio.fixture
+async def registered_user_token(
+    async_client: AsyncClient,
+    registered_user: dict,
+) -> str:
+    """Get an access token for the registered user."""
+    response = await async_client.post(
+        "/api/v1/auth/jwt/login",
+        data={
+            "username": registered_user["email"],
+            "password": registered_user["password"],
+        },
+    )
+    assert response.status_code == 200
+
+    return response.json()["access_token"]

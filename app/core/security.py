@@ -1,5 +1,6 @@
 """Security utilities for JWT and password hashing."""
 
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -27,7 +28,7 @@ def create_access_token(
     data: dict[str, Any],
     expires_delta: timedelta | None = None,
 ) -> str:
-    """Create a JWT access token."""
+    """Create a JWT access token with JTI for blacklisting support."""
     settings = get_settings()
 
     to_encode = data.copy()
@@ -35,7 +36,12 @@ def create_access_token(
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
 
-    to_encode.update({"exp": expire, "type": "access"})
+    # Add JTI for token revocation support
+    to_encode.update({
+        "exp": expire,
+        "type": "access",
+        "jti": str(uuid.uuid4()),
+    })
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
@@ -43,7 +49,7 @@ def create_refresh_token(
     data: dict[str, Any],
     expires_delta: timedelta | None = None,
 ) -> str:
-    """Create a JWT refresh token."""
+    """Create a JWT refresh token with JTI for blacklisting support."""
     settings = get_settings()
 
     to_encode = data.copy()
@@ -51,7 +57,12 @@ def create_refresh_token(
         expires_delta or timedelta(days=settings.refresh_token_expire_days)
     )
 
-    to_encode.update({"exp": expire, "type": "refresh"})
+    # Add JTI for token revocation support
+    to_encode.update({
+        "exp": expire,
+        "type": "refresh",
+        "jti": str(uuid.uuid4()),
+    })
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 

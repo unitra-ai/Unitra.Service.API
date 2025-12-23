@@ -1,5 +1,6 @@
 """JWT Authentication backend for FastAPI-Users."""
 
+import uuid
 from uuid import UUID
 
 from fastapi import Depends
@@ -51,14 +52,18 @@ async def get_user_manager(
 
 
 class CustomJWTStrategy(JWTStrategy[User, UUID]):
-    """Custom JWT strategy with additional claims."""
+    """Custom JWT strategy with additional claims including JTI for token revocation."""
 
     async def write_token(self, user: User) -> str:
-        """Create JWT token with custom claims."""
+        """Create JWT token with custom claims including JTI for blacklisting."""
+        # Generate unique token ID for blacklisting support
+        jti = str(uuid.uuid4())
+
         # Add custom claims to the token
         data = {
             "sub": str(user.id),
             "aud": self.token_audience,
+            "jti": jti,  # JWT ID for token revocation
             # Custom claims
             "tier": user.tier,
             "minutes_remaining": user.minutes_remaining,

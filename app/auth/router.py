@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from jose import JWTError, jwt
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +18,9 @@ from app.auth.backend import (
 from app.auth.models import User
 from app.auth.schemas import (
     AuthHealthResponse,
+    LogoutResponse,
+    RefreshTokenRequest,
+    RefreshTokenResponse,
     TierUpgradeRequest,
     TierUpgradeResponse,
     UsageStatistics,
@@ -25,6 +29,7 @@ from app.auth.schemas import (
     UserUpdate,
 )
 from app.config import get_settings
+from app.db.redis import RedisClient, get_redis
 from app.db.session import get_db_session
 
 logger = structlog.get_logger("app.auth.router")
@@ -143,6 +148,190 @@ async def auth_health_check(
         )
 
 
+@custom_router.post(
+    "/logout",
+    response_model=LogoutResponse,
+    summary="Logout and invalidate token",
+    description="Logout user and blacklist the current JWT token server-side.",
+)
+async def logout(
+    request: Request,
+    user: Annotated[User, Depends(current_user)],
+    redis: Annotated[RedisClient, Depends(get_redis)],
+    authorization: str = Header(...),
+) -> LogoutResponse:
+    """Logout user and blacklist the JWT token.
+
+    This endpoint extracts the JTI from the token and adds it to the Redis
+    blacklist, ensuring the token cannot be reused even before expiration.
+    """
+    try:
+        # Extract token from Authorization header
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authorization header format",
+            )
+
+        token = authorization.replace("Bearer ", "")
+
+        # Decode token to get JTI and expiration
+        # Note: FastAPI-Users tokens use "unitra:auth" as audience
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+            audience="unitra:auth",
+        )
+
+        jti = payload.get("jti")
+        exp = payload.get("exp")
+
+        if not jti:
+            # Token doesn't have JTI, still log out successfully
+            logger.warning(
+                "logout_no_jti",
+                user_id=str(user.id),
+                message="Token without JTI, cannot blacklist",
+            )
+            return LogoutResponse(
+                success=True,
+                message="Logged out (token will remain valid until expiration)",
+            )
+
+        # Calculate remaining TTL for the token
+        now = datetime.now(timezone.utc).timestamp()
+        ttl = int(exp - now) if exp else settings.jwt_lifetime_seconds
+
+        if ttl > 0:
+            # Blacklist the token
+            await redis.blacklist_token(jti, ttl)
+
+        logger.info(
+            "user_logged_out",
+            user_id=str(user.id),
+            jti=jti,
+            token_blacklisted=True,
+        )
+
+        # Also clear Redis session cache
+        await redis.delete_session(str(user.id))
+
+        return LogoutResponse(
+            success=True,
+            message="Logged out successfully. Token has been invalidated.",
+        )
+
+    except JWTError as e:
+        logger.error(
+            "logout_token_decode_error",
+            user_id=str(user.id),
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+
+@custom_router.post(
+    "/refresh",
+    response_model=RefreshTokenResponse,
+    summary="Refresh access token",
+    description="Get a new access token using a refresh token.",
+)
+async def refresh_token(
+    request: RefreshTokenRequest,
+    redis: Annotated[RedisClient, Depends(get_redis)],
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> RefreshTokenResponse:
+    """Refresh access token using a refresh token.
+
+    This endpoint validates the refresh token and issues a new access token.
+    The old access token (if blacklisted) remains blacklisted.
+    """
+    from app.auth.backend import get_user_db, CustomJWTStrategy
+    from app.auth.models import User
+
+    try:
+        # Decode refresh token
+        payload = jwt.decode(
+            request.refresh_token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+        )
+
+        # Verify it's a refresh token type
+        token_type = payload.get("type")
+        if token_type != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type. Expected refresh token.",
+            )
+
+        # Check if refresh token is blacklisted
+        jti = payload.get("jti")
+        if jti and await redis.is_token_blacklisted(jti):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token has been revoked",
+            )
+
+        # Get user from database
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: no user ID",
+            )
+
+        from sqlalchemy import select
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is inactive",
+            )
+
+        # Generate new access token using custom strategy
+        strategy = CustomJWTStrategy(
+            secret=settings.secret_key,
+            lifetime_seconds=settings.jwt_lifetime_seconds,
+            token_audience=["unitra:auth"],
+            algorithm=settings.algorithm,
+        )
+        new_access_token = await strategy.write_token(user)
+
+        logger.info(
+            "token_refreshed",
+            user_id=str(user.id),
+        )
+
+        return RefreshTokenResponse(
+            access_token=new_access_token,
+            token_type="bearer",
+        )
+
+    except JWTError as e:
+        logger.error(
+            "refresh_token_error",
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid refresh token: {e}",
+        )
+
+
 # =============================================================================
 # Main Auth Router Aggregation
 # =============================================================================
@@ -153,7 +342,9 @@ def get_auth_router() -> APIRouter:
 
     Routes:
     - POST /auth/jwt/login - Login and get JWT
-    - POST /auth/jwt/logout - Logout (client-side for JWT)
+    - POST /auth/jwt/logout - Logout (client-side for JWT, FastAPI-Users default)
+    - POST /auth/logout - Logout with server-side token blacklisting
+    - POST /auth/refresh - Refresh access token using refresh token
     - POST /auth/register - User registration
     - POST /auth/forgot-password - Request password reset
     - POST /auth/reset-password - Execute password reset
