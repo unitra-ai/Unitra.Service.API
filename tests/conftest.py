@@ -1,9 +1,8 @@
 """Pytest fixtures and configuration for testing."""
 
-import asyncio
 import os
+from collections.abc import AsyncGenerator, Generator
 from datetime import timedelta
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -12,21 +11,18 @@ import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
-
-from app.config import Settings, get_settings
-from app.db.base import Base
-from app.main import app
 
 # Import all models to register them with SQLAlchemy metadata
 # This ensures relationships are properly resolved when creating tables
 from app.auth.models import User  # noqa: F401
-from app.models.subscription import Subscription  # noqa: F401
+from app.config import Settings
+from app.db.base import Base
+from app.main import app
 from app.models.refresh_token import RefreshToken  # noqa: F401
+from app.models.subscription import Subscription  # noqa: F401
 from app.models.usage import UsageLog  # noqa: F401
-
 
 # =============================================================================
 # Environment Setup
@@ -138,8 +134,8 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
     3. Mocks Redis client for testing
     4. Provides an async HTTP client for making requests
     """
+    from app.db.redis import RedisClient, get_redis
     from app.db.session import get_db_session
-    from app.db.redis import get_redis, RedisClient
 
     # Create async session factory for test database
     test_session_factory = async_sessionmaker(

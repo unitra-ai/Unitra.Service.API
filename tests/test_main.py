@@ -1,10 +1,11 @@
 """Tests for main application module."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 from fastapi import FastAPI
 
-from app.main import create_app, lifespan, app
+from app.main import app, create_app, lifespan
 
 
 class TestCreateApp:
@@ -30,9 +31,6 @@ class TestCreateApp:
 
     def test_app_has_cors_middleware(self) -> None:
         """Test app has CORS middleware configured."""
-        middleware_classes = [
-            m.cls.__name__ for m in app.user_middleware if hasattr(m, "cls")
-        ]
         # CORS is handled by Starlette's CORSMiddleware
         assert any("CORSMiddleware" in str(m) for m in app.user_middleware)
 
@@ -79,55 +77,59 @@ class TestLifespan:
         """Test lifespan initializes database and Redis."""
         mock_app = MagicMock(spec=FastAPI)
 
-        with patch("app.main.init_db", new_callable=AsyncMock) as mock_init_db:
-            with patch("app.main.init_redis", new_callable=AsyncMock) as mock_init_redis:
-                with patch("app.main.close_db", new_callable=AsyncMock) as mock_close_db:
-                    with patch(
-                        "app.main.close_redis", new_callable=AsyncMock
-                    ) as mock_close_redis:
-                        async with lifespan(mock_app):
-                            # During lifespan, DB and Redis should be initialized
-                            mock_init_db.assert_called_once()
-                            mock_init_redis.assert_called_once()
+        with (
+            patch("app.main.init_db", new_callable=AsyncMock) as mock_init_db,
+            patch("app.main.init_redis", new_callable=AsyncMock) as mock_init_redis,
+            patch("app.main.close_db", new_callable=AsyncMock) as mock_close_db,
+            patch("app.main.close_redis", new_callable=AsyncMock) as mock_close_redis,
+        ):
+            async with lifespan(mock_app):
+                # During lifespan, DB and Redis should be initialized
+                mock_init_db.assert_called_once()
+                mock_init_redis.assert_called_once()
 
-                        # After lifespan exits, should close connections
-                        mock_close_db.assert_called_once()
-                        mock_close_redis.assert_called_once()
+            # After lifespan exits, should close connections
+            mock_close_db.assert_called_once()
+            mock_close_redis.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_lifespan_logs_startup(self) -> None:
         """Test lifespan logs startup events."""
         mock_app = MagicMock(spec=FastAPI)
 
-        with patch("app.main.init_db", new_callable=AsyncMock):
-            with patch("app.main.init_redis", new_callable=AsyncMock):
-                with patch("app.main.close_db", new_callable=AsyncMock):
-                    with patch("app.main.close_redis", new_callable=AsyncMock):
-                        with patch("app.main.logger") as mock_logger:
-                            async with lifespan(mock_app):
-                                pass
+        with (
+            patch("app.main.init_db", new_callable=AsyncMock),
+            patch("app.main.init_redis", new_callable=AsyncMock),
+            patch("app.main.close_db", new_callable=AsyncMock),
+            patch("app.main.close_redis", new_callable=AsyncMock),
+            patch("app.main.logger") as mock_logger,
+        ):
+            async with lifespan(mock_app):
+                pass
 
-                            # Check logging calls
-                            calls = [str(call) for call in mock_logger.info.call_args_list]
-                            assert any("application_starting" in c for c in calls)
-                            assert any("application_started" in c for c in calls)
+            # Check logging calls
+            calls = [str(call) for call in mock_logger.info.call_args_list]
+            assert any("application_starting" in c for c in calls)
+            assert any("application_started" in c for c in calls)
 
     @pytest.mark.asyncio
     async def test_lifespan_logs_shutdown(self) -> None:
         """Test lifespan logs shutdown events."""
         mock_app = MagicMock(spec=FastAPI)
 
-        with patch("app.main.init_db", new_callable=AsyncMock):
-            with patch("app.main.init_redis", new_callable=AsyncMock):
-                with patch("app.main.close_db", new_callable=AsyncMock):
-                    with patch("app.main.close_redis", new_callable=AsyncMock):
-                        with patch("app.main.logger") as mock_logger:
-                            async with lifespan(mock_app):
-                                pass
+        with (
+            patch("app.main.init_db", new_callable=AsyncMock),
+            patch("app.main.init_redis", new_callable=AsyncMock),
+            patch("app.main.close_db", new_callable=AsyncMock),
+            patch("app.main.close_redis", new_callable=AsyncMock),
+            patch("app.main.logger") as mock_logger,
+        ):
+            async with lifespan(mock_app):
+                pass
 
-                            calls = [str(call) for call in mock_logger.info.call_args_list]
-                            assert any("application_stopping" in c for c in calls)
-                            assert any("application_stopped" in c for c in calls)
+            calls = [str(call) for call in mock_logger.info.call_args_list]
+            assert any("application_stopping" in c for c in calls)
+            assert any("application_stopped" in c for c in calls)
 
 
 class TestAppConfiguration:
@@ -140,7 +142,5 @@ class TestAppConfiguration:
 
     def test_request_logging_middleware_added(self) -> None:
         """Test request logging middleware is added."""
-        middleware_names = [
-            str(m) for m in app.user_middleware
-        ]
+        middleware_names = [str(m) for m in app.user_middleware]
         assert any("RequestLogging" in name for name in middleware_names)

@@ -3,8 +3,7 @@
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from httpx import ASGITransport, AsyncClient
-from pydantic import BaseModel, ValidationError as PydanticValidationError
+from httpx import AsyncClient
 
 from app.core.exception_handlers import (
     app_exception_handler,
@@ -19,7 +18,6 @@ from app.core.exceptions import (
     NotFoundError,
     RateLimitError,
 )
-
 
 # =============================================================================
 # Error Response Tests
@@ -269,9 +267,7 @@ class TestExceptionHandlerIntegration:
     """Integration tests for exception handlers with real app."""
 
     @pytest.mark.asyncio
-    async def test_validation_error_on_invalid_request(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_validation_error_on_invalid_request(self, async_client: AsyncClient) -> None:
         """Test validation error is properly formatted."""
         # Send invalid JSON to translate endpoint
         response = await async_client.post(
@@ -283,18 +279,14 @@ class TestExceptionHandlerIntegration:
         assert response.status_code in [422, 501]
 
     @pytest.mark.asyncio
-    async def test_not_found_for_unknown_endpoint(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_not_found_for_unknown_endpoint(self, async_client: AsyncClient) -> None:
         """Test 404 for unknown endpoints."""
         response = await async_client.get("/api/v1/nonexistent")
 
         assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_error_response_structure(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_error_response_structure(self, async_client: AsyncClient) -> None:
         """Test error responses have consistent structure."""
         response = await async_client.get("/api/v1/nonexistent")
 

@@ -1,13 +1,11 @@
 """Tests for middleware."""
 
-import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import AsyncClient
 
-from app.core.middleware import RateLimitMiddleware, RequestLoggingMiddleware
-
+from app.core.middleware import RateLimitMiddleware
 
 # =============================================================================
 # Request Logging Middleware Tests
@@ -57,9 +55,7 @@ class TestRequestLoggingMiddleware:
         assert time_value >= 0
 
     @pytest.mark.asyncio
-    async def test_correlation_id_stored_in_request_state(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_correlation_id_stored_in_request_state(self, async_client: AsyncClient) -> None:
         """Test correlation ID is accessible in request state."""
         # This is tested indirectly through the response header
         response = await async_client.get("/api/health/live")
@@ -106,9 +102,7 @@ class TestRateLimitMiddleware:
         assert "/api/version" in middleware.SKIP_PATHS
         assert "/api/docs" in middleware.SKIP_PATHS
 
-    def test_middleware_initialization(
-        self, mock_app: MagicMock, mock_redis: AsyncMock
-    ) -> None:
+    def test_middleware_initialization(self, mock_app: MagicMock, mock_redis: AsyncMock) -> None:
         """Test middleware initializes with correct parameters."""
         middleware = RateLimitMiddleware(
             app=mock_app,
@@ -121,9 +115,7 @@ class TestRateLimitMiddleware:
         assert middleware.window == 30
 
     @pytest.mark.asyncio
-    async def test_health_endpoints_skip_rate_limiting(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_health_endpoints_skip_rate_limiting(self, async_client: AsyncClient) -> None:
         """Test that health endpoints are not rate limited."""
         # Make many requests to health endpoint
         for _ in range(10):
@@ -131,9 +123,7 @@ class TestRateLimitMiddleware:
             assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_version_endpoint_skips_rate_limiting(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_version_endpoint_skips_rate_limiting(self, async_client: AsyncClient) -> None:
         """Test that version endpoint is not rate limited."""
         for _ in range(10):
             response = await async_client.get("/api/version")
@@ -149,9 +139,7 @@ class TestMiddlewareIntegration:
     """Integration tests for middleware chain."""
 
     @pytest.mark.asyncio
-    async def test_all_responses_have_timing_headers(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_all_responses_have_timing_headers(self, async_client: AsyncClient) -> None:
         """Test all responses include timing headers."""
         endpoints = [
             "/api/health",
@@ -166,9 +154,7 @@ class TestMiddlewareIntegration:
             assert "X-Response-Time" in response.headers, f"Missing header for {endpoint}"
 
     @pytest.mark.asyncio
-    async def test_error_responses_have_headers(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_error_responses_have_headers(self, async_client: AsyncClient) -> None:
         """Test error responses also include middleware headers."""
         response = await async_client.get("/api/v1/nonexistent")
 
@@ -177,9 +163,7 @@ class TestMiddlewareIntegration:
         assert "X-Response-Time" in response.headers
 
     @pytest.mark.asyncio
-    async def test_post_requests_have_headers(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_post_requests_have_headers(self, async_client: AsyncClient) -> None:
         """Test POST requests include middleware headers."""
         response = await async_client.post(
             "/api/v1/translate",
@@ -227,9 +211,7 @@ class TestMiddlewareLogging:
     """Tests for middleware logging functionality."""
 
     @pytest.mark.asyncio
-    async def test_request_logs_are_generated(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_request_logs_are_generated(self, async_client: AsyncClient) -> None:
         """Test that requests generate log entries."""
         # This test verifies the middleware runs without errors
         # Actual log verification would require log capture
@@ -237,9 +219,7 @@ class TestMiddlewareLogging:
         assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_slow_request_timing_captured(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_slow_request_timing_captured(self, async_client: AsyncClient) -> None:
         """Test that slow requests have accurate timing."""
         response = await async_client.get("/api/health")
 

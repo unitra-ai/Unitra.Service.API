@@ -1,12 +1,10 @@
 """Health check endpoints."""
 
-import asyncio
 import os
 import sys
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel

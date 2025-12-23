@@ -3,7 +3,6 @@
 import pytest
 from httpx import AsyncClient
 
-
 # =============================================================================
 # Health Endpoint Integration Tests
 # =============================================================================
@@ -67,9 +66,7 @@ class TestHealthEndpoints:
         assert time_ms < 100
 
     @pytest.mark.asyncio
-    async def test_health_ready_returns_503_without_deps(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_health_ready_returns_503_without_deps(self, async_client: AsyncClient) -> None:
         """Test /api/health/ready returns 503 when dependencies unavailable."""
         response = await async_client.get("/api/health/ready")
 
@@ -77,9 +74,7 @@ class TestHealthEndpoints:
         assert response.status_code == 503
 
     @pytest.mark.asyncio
-    async def test_health_ready_error_contains_details(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_health_ready_error_contains_details(self, async_client: AsyncClient) -> None:
         """Test /api/health/ready error contains dependency info."""
         response = await async_client.get("/api/health/ready")
         data = response.json()
@@ -167,9 +162,7 @@ class TestTranslationEndpoints:
         assert isinstance(data["languages"], list)
 
     @pytest.mark.asyncio
-    async def test_languages_include_common_languages(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_languages_include_common_languages(self, async_client: AsyncClient) -> None:
         """Test languages list includes common languages."""
         response = await async_client.get("/api/v1/translate/languages")
         data = response.json()
@@ -179,9 +172,7 @@ class TestTranslationEndpoints:
         assert "zh" in language_codes
 
     @pytest.mark.asyncio
-    async def test_translate_batch_endpoint_exists(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_translate_batch_endpoint_exists(self, async_client: AsyncClient) -> None:
         """Test /api/v1/translate/batch endpoint exists."""
         response = await async_client.post(
             "/api/v1/translate/batch",
@@ -245,9 +236,7 @@ class TestBillingEndpoints:
         assert response.status_code in [200, 401, 501]
 
     @pytest.mark.asyncio
-    async def test_subscription_endpoint_exists(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_subscription_endpoint_exists(self, async_client: AsyncClient) -> None:
         """Test /api/v1/billing/subscription endpoint exists."""
         response = await async_client.get("/api/v1/billing/subscription")
 
@@ -333,9 +322,7 @@ class TestContentTypes:
     """Integration tests for content type handling."""
 
     @pytest.mark.asyncio
-    async def test_json_response_content_type(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_json_response_content_type(self, async_client: AsyncClient) -> None:
         """Test responses have correct content type."""
         response = await async_client.get("/api/health")
 
@@ -343,9 +330,7 @@ class TestContentTypes:
         assert "application/json" in content_type
 
     @pytest.mark.asyncio
-    async def test_accepts_json_content_type(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_accepts_json_content_type(self, async_client: AsyncClient) -> None:
         """Test server accepts JSON content type."""
         response = await async_client.post(
             "/api/v1/translate",
@@ -379,11 +364,9 @@ class TestPerformance:
         assert elapsed < 1000
 
     @pytest.mark.asyncio
-    async def test_multiple_sequential_requests(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_multiple_sequential_requests(self, async_client: AsyncClient) -> None:
         """Test multiple sequential requests are handled correctly."""
-        for i in range(5):
+        for _i in range(5):
             response = await async_client.get("/api/health/live")
             assert response.status_code == 200
 

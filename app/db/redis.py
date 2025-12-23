@@ -33,8 +33,9 @@ Real-time:
                                  # TTL: None (managed by connection lifecycle)
 """
 
+from collections.abc import AsyncGenerator
 from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator
+from typing import Any
 
 import redis.asyncio as redis
 

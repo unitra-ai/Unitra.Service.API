@@ -1,0 +1,36 @@
+# Code Owners for Unitra Service API
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @unitra-ai/backend-team
+
+# Authentication & Authorization
+/app/auth/ @unitra-ai/backend-team @unitra-ai/security-team
+/app/core/security.py @unitra-ai/security-team
+
+# Database & Migrations
+/app/db/ @unitra-ai/backend-team @unitra-ai/devops-team
+/app/models/ @unitra-ai/backend-team
+/alembic/ @unitra-ai/backend-team @unitra-ai/devops-team
+
+# API Endpoints
+/app/api/ @unitra-ai/backend-team
+
+# Infrastructure & CI/CD
+/.github/ @unitra-ai/devops-team
+/docker/ @unitra-ai/devops-team
+/Dockerfile @unitra-ai/devops-team
+/docker-compose.yml @unitra-ai/devops-team
+
+# Documentation
+/docs/ @unitra-ai/backend-team
+/README.md @unitra-ai/backend-team
+/CONTRIBUTING.md @unitra-ai/backend-team
+/CLAUDE.md @unitra-ai/backend-team
+
+# Tests
+/tests/ @unitra-ai/backend-team
+
+# Configuration
+/pyproject.toml @unitra-ai/backend-team @unitra-ai/devops-team
+/.env.example @unitra-ai/backend-team @unitra-ai/devops-team

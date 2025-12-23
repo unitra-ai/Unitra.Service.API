@@ -1,6 +1,5 @@
 """Tests for custom exception classes."""
 
-import pytest
 
 from app.core.exceptions import (
     AccountInactiveError,
@@ -24,7 +23,6 @@ from app.core.exceptions import (
     UsageLimitExceededError,
     ValidationError,
 )
-
 
 # =============================================================================
 # Base Exception Tests

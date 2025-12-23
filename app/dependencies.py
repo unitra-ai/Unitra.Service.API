@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings, get_settings
 from app.core.exceptions import (
-    AccountInactiveError,
     AuthenticationError,
     TokenExpiredError,
     TokenInvalidError,

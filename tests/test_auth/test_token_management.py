@@ -1,7 +1,7 @@
 """Tests for token management endpoints (logout with blacklist, refresh)."""
 
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient
 from jose import jwt
 
@@ -21,9 +21,7 @@ class TestLogoutEndpoint:
         assert response.status_code != 404
 
     @pytest.mark.asyncio
-    async def test_logout_requires_authentication(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_logout_requires_authentication(self, async_client: AsyncClient) -> None:
         """Test logout requires valid authentication."""
         response = await async_client.post("/api/v1/auth/logout")
         assert response.status_code in [401, 422]
@@ -63,9 +61,7 @@ class TestLogoutEndpoint:
         assert isinstance(data["message"], str)
 
     @pytest.mark.asyncio
-    async def test_logout_invalid_token_format(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_logout_invalid_token_format(self, async_client: AsyncClient) -> None:
         """Test logout with invalid token format fails."""
         response = await async_client.post(
             "/api/v1/auth/logout",
@@ -88,9 +84,7 @@ class TestRefreshTokenEndpoint:
         assert response.status_code != 404
 
     @pytest.mark.asyncio
-    async def test_refresh_with_invalid_token(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_refresh_with_invalid_token(self, async_client: AsyncClient) -> None:
         """Test refresh with invalid token fails."""
         response = await async_client.post(
             "/api/v1/auth/refresh",
@@ -99,9 +93,7 @@ class TestRefreshTokenEndpoint:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_refresh_with_missing_token(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_refresh_with_missing_token(self, async_client: AsyncClient) -> None:
         """Test refresh with missing token field fails."""
         response = await async_client.post(
             "/api/v1/auth/refresh",
@@ -123,7 +115,136 @@ class TestRefreshTokenEndpoint:
         )
         # Should fail because it's not a refresh token
         assert response.status_code == 401
-        assert "type" in response.json().get("detail", "").lower() or "invalid" in response.json().get("detail", "").lower()
+        assert (
+            "type" in response.json().get("detail", "").lower()
+            or "invalid" in response.json().get("detail", "").lower()
+        )
+
+    @pytest.mark.asyncio
+    async def test_refresh_with_valid_refresh_token_success(
+        self,
+        async_client: AsyncClient,
+        registered_user: dict,
+    ) -> None:
+        """Test successful token refresh with valid refresh token."""
+        from app.core.security import create_refresh_token
+
+        # Create a valid refresh token for the registered user
+        user_id = registered_user["user"]["id"]
+        refresh_token = create_refresh_token(data={"sub": user_id})
+
+        # Refresh the token
+        response = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert "token_type" in data
+        assert data["token_type"] == "bearer"
+        assert len(data["access_token"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_refreshed_access_token_works(
+        self,
+        async_client: AsyncClient,
+        registered_user: dict,
+    ) -> None:
+        """Test that the new access token from refresh can be used."""
+        from app.core.security import create_refresh_token
+
+        user_id = registered_user["user"]["id"]
+        refresh_token = create_refresh_token(data={"sub": user_id})
+
+        # Get new access token
+        refresh_response = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+        assert refresh_response.status_code == 200
+        new_access_token = refresh_response.json()["access_token"]
+
+        # Use the new access token to access protected endpoint
+        me_response = await async_client.get(
+            "/api/v1/users/me",
+            headers={"Authorization": f"Bearer {new_access_token}"},
+        )
+        assert me_response.status_code == 200
+        assert me_response.json()["id"] == user_id
+
+    @pytest.mark.asyncio
+    async def test_refresh_with_expired_token_fails(
+        self,
+        async_client: AsyncClient,
+        registered_user: dict,
+    ) -> None:
+        """Test refresh with expired refresh token fails."""
+        from datetime import timedelta
+
+        from app.core.security import create_refresh_token
+
+        user_id = registered_user["user"]["id"]
+        # Create an expired refresh token (negative expiry)
+        expired_refresh_token = create_refresh_token(
+            data={"sub": user_id},
+            expires_delta=timedelta(seconds=-1),
+        )
+
+        response = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": expired_refresh_token},
+        )
+        assert response.status_code == 401
+        detail = response.json().get("detail", "").lower()
+        assert "expired" in detail or "invalid" in detail
+
+    @pytest.mark.asyncio
+    async def test_refresh_token_response_structure(
+        self,
+        async_client: AsyncClient,
+        registered_user: dict,
+    ) -> None:
+        """Test refresh token response has correct structure."""
+        from app.core.security import create_refresh_token
+
+        user_id = registered_user["user"]["id"]
+        refresh_token = create_refresh_token(data={"sub": user_id})
+
+        response = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Verify response structure matches RefreshTokenResponse schema
+        assert isinstance(data["access_token"], str)
+        assert isinstance(data["token_type"], str)
+        assert data["token_type"] == "bearer"
+
+    @pytest.mark.asyncio
+    async def test_refresh_with_nonexistent_user_fails(
+        self,
+        async_client: AsyncClient,
+    ) -> None:
+        """Test refresh with token for non-existent user fails."""
+        from uuid import uuid4
+
+        from app.core.security import create_refresh_token
+
+        # Create refresh token for a user that doesn't exist
+        fake_user_id = str(uuid4())
+        refresh_token = create_refresh_token(data={"sub": fake_user_id})
+
+        response = await async_client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": refresh_token},
+        )
+        assert response.status_code == 401
+        detail = response.json().get("detail", "").lower()
+        assert "not found" in detail or "invalid" in detail
 
 
 class TestJWTWithJTI:
@@ -206,7 +327,7 @@ class TestTokenBlacklist:
         # Try to use the same token again - it should still work for
         # subsequent requests until the blacklist check is integrated
         # into the authentication middleware (this tests current behavior)
-        me_response = await async_client.get(
+        await async_client.get(
             "/api/v1/users/me",
             headers={"Authorization": f"Bearer {registered_user_token}"},
         )

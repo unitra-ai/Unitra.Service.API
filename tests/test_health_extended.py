@@ -1,14 +1,14 @@
 """Extended tests for health check endpoints."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, ASGITransport
+
+import pytest
 from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 
 from app.api.v1.health import (
-    HealthStatus,
     ComponentHealth,
-    HealthResponse,
+    HealthStatus,
     SimpleHealthResponse,
     VersionResponse,
     get_optional_db,
@@ -120,9 +120,7 @@ class TestHealthEndpointsIntegration:
         return app
 
     @pytest.mark.asyncio
-    async def test_health_with_db_not_initialized(
-        self, app_with_health: FastAPI
-    ) -> None:
+    async def test_health_with_db_not_initialized(self, app_with_health: FastAPI) -> None:
         """Test health endpoint when DB is not initialized."""
         app = app_with_health
 
@@ -130,9 +128,7 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = lambda: None
         app.dependency_overrides[get_optional_redis] = lambda: None
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health")
 
         assert response.status_code == 200
@@ -156,9 +152,7 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = lambda: None
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health")
 
         assert response.status_code == 200
@@ -189,9 +183,7 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = mock_get_redis
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health")
 
         assert response.status_code == 200
@@ -221,9 +213,7 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = mock_get_redis
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health")
 
         assert response.status_code == 200
@@ -235,26 +225,20 @@ class TestHealthEndpointsIntegration:
         assert "latency_ms" in data["components"]["redis"]
 
     @pytest.mark.asyncio
-    async def test_readiness_returns_503_when_not_ready(
-        self, app_with_health: FastAPI
-    ) -> None:
+    async def test_readiness_returns_503_when_not_ready(self, app_with_health: FastAPI) -> None:
         """Test readiness probe returns 503 when not ready."""
         app = app_with_health
 
         app.dependency_overrides[get_optional_db] = lambda: None
         app.dependency_overrides[get_optional_redis] = lambda: None
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/ready")
 
         assert response.status_code == 503
 
     @pytest.mark.asyncio
-    async def test_readiness_returns_503_on_db_error(
-        self, app_with_health: FastAPI
-    ) -> None:
+    async def test_readiness_returns_503_on_db_error(self, app_with_health: FastAPI) -> None:
         """Test readiness probe returns 503 when DB fails."""
         app = app_with_health
 
@@ -273,18 +257,14 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = mock_get_redis
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/ready")
 
         assert response.status_code == 503
         assert "Database" in response.json()["detail"]
 
     @pytest.mark.asyncio
-    async def test_readiness_returns_503_on_redis_error(
-        self, app_with_health: FastAPI
-    ) -> None:
+    async def test_readiness_returns_503_on_redis_error(self, app_with_health: FastAPI) -> None:
         """Test readiness probe returns 503 when Redis fails."""
         app = app_with_health
 
@@ -303,18 +283,14 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = mock_get_redis
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/ready")
 
         assert response.status_code == 503
         assert "Redis" in response.json()["detail"]
 
     @pytest.mark.asyncio
-    async def test_readiness_returns_200_when_ready(
-        self, app_with_health: FastAPI
-    ) -> None:
+    async def test_readiness_returns_200_when_ready(self, app_with_health: FastAPI) -> None:
         """Test readiness probe returns 200 when all components ready."""
         app = app_with_health
 
@@ -333,9 +309,7 @@ class TestHealthEndpointsIntegration:
         app.dependency_overrides[get_optional_db] = mock_get_db
         app.dependency_overrides[get_optional_redis] = mock_get_redis
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/ready")
 
         assert response.status_code == 200
@@ -346,9 +320,7 @@ class TestHealthEndpointsIntegration:
         """Test version endpoint returns correct info."""
         app = app_with_health
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/version")
 
         assert response.status_code == 200

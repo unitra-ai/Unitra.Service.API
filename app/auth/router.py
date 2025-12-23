@@ -231,7 +231,7 @@ async def logout(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-        )
+        ) from e
 
 
 @custom_router.post(
@@ -250,7 +250,7 @@ async def refresh_token(
     This endpoint validates the refresh token and issues a new access token.
     The old access token (if blacklisted) remains blacklisted.
     """
-    from app.auth.backend import get_user_db, CustomJWTStrategy
+    from app.auth.backend import CustomJWTStrategy
     from app.auth.models import User
 
     try:
@@ -329,7 +329,7 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid refresh token: {e}",
-        )
+        ) from e
 
 
 # =============================================================================

@@ -8,18 +8,14 @@ class TestBillingEndpoints:
     """Tests for billing API endpoints."""
 
     @pytest.mark.asyncio
-    async def test_get_subscription_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_get_subscription_returns_501(self, async_client: AsyncClient) -> None:
         """Test get subscription endpoint returns 501."""
         response = await async_client.get("/api/v1/billing/subscription")
         assert response.status_code == 501
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_create_checkout_session_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_create_checkout_session_returns_501(self, async_client: AsyncClient) -> None:
         """Test create checkout session returns 501."""
         response = await async_client.post(
             "/api/v1/billing/checkout",
@@ -33,45 +29,35 @@ class TestBillingEndpoints:
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_create_portal_session_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_create_portal_session_returns_501(self, async_client: AsyncClient) -> None:
         """Test create portal session returns 501."""
         response = await async_client.post("/api/v1/billing/portal")
         assert response.status_code == 501
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_cancel_subscription_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_cancel_subscription_returns_501(self, async_client: AsyncClient) -> None:
         """Test cancel subscription returns 501."""
         response = await async_client.post("/api/v1/billing/cancel")
         assert response.status_code == 501
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_reactivate_subscription_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_reactivate_subscription_returns_501(self, async_client: AsyncClient) -> None:
         """Test reactivate subscription returns 501."""
         response = await async_client.post("/api/v1/billing/reactivate")
         assert response.status_code == 501
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_list_invoices_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_list_invoices_returns_501(self, async_client: AsyncClient) -> None:
         """Test list invoices returns 501."""
         response = await async_client.get("/api/v1/billing/invoices")
         assert response.status_code == 501
         assert response.json()["detail"] == "Not implemented"
 
     @pytest.mark.asyncio
-    async def test_stripe_webhook_returns_501(
-        self, async_client: AsyncClient
-    ) -> None:
+    async def test_stripe_webhook_returns_501(self, async_client: AsyncClient) -> None:
         """Test stripe webhook returns 501."""
         response = await async_client.post("/api/v1/billing/webhook")
         assert response.status_code == 501
@@ -125,9 +111,7 @@ class TestBillingModels:
         """Test PortalSessionResponse model."""
         from app.api.v1.billing import PortalSessionResponse
 
-        response = PortalSessionResponse(
-            portal_url="https://billing.stripe.com/p/session/123"
-        )
+        response = PortalSessionResponse(portal_url="https://billing.stripe.com/p/session/123")
         assert response.portal_url == "https://billing.stripe.com/p/session/123"
 
     def test_invoice_response_model(self) -> None:

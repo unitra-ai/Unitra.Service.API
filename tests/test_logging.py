@@ -1,15 +1,11 @@
 """Tests for logging configuration."""
 
-import io
-import json
-import sys
 from unittest.mock import patch
 
 import pytest
 import structlog
 
 from app.core.logging import setup_logging
-
 
 # =============================================================================
 # Logging Setup Tests
@@ -44,9 +40,7 @@ class TestLoggingSetup:
         logger.error("error message")
 
     @patch("app.core.logging.get_settings")
-    def test_development_logging_uses_console_renderer(
-        self, mock_settings
-    ) -> None:
+    def test_development_logging_uses_console_renderer(self, mock_settings) -> None:
         """Test development environment uses console renderer."""
         mock_settings.return_value.environment = "development"
         mock_settings.return_value.debug = True
@@ -59,9 +53,7 @@ class TestLoggingSetup:
         logger.info("test")
 
     @patch("app.core.logging.get_settings")
-    def test_production_logging_uses_json_renderer(
-        self, mock_settings
-    ) -> None:
+    def test_production_logging_uses_json_renderer(self, mock_settings) -> None:
         """Test production environment uses JSON renderer."""
         mock_settings.return_value.environment = "production"
         mock_settings.return_value.debug = False

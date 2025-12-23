@@ -1,8 +1,9 @@
 """Tests for auth router custom endpoints."""
 
-import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
+
+import pytest
 from httpx import AsyncClient
 
 from app.auth.router import get_auth_router, get_users_router
@@ -72,8 +73,6 @@ class TestUsageStatisticsEndpoint:
 
     def test_december_reset_date_calculation(self) -> None:
         """Test reset date calculation for December."""
-        from app.auth.router import get_usage_statistics
-        from app.auth.schemas import UsageStatistics
 
         # Test that December -> January next year
         now = datetime(2024, 12, 15, tzinfo=timezone.utc)

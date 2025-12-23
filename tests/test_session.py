@@ -1,14 +1,13 @@
 """Tests for database session management."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from app.db.session import (
-    init_db,
     close_db,
     get_db_session,
-    _engine,
-    _async_session_factory,
+    init_db,
 )
 
 
@@ -71,8 +70,9 @@ class TestDatabaseSession:
     @pytest.mark.asyncio
     async def test_get_db_session_yields_and_commits(self) -> None:
         """Test get_db_session yields session and commits."""
-        import app.db.session as session_module
         from contextlib import asynccontextmanager
+
+        import app.db.session as session_module
 
         mock_session = AsyncMock()
 
@@ -97,8 +97,9 @@ class TestDatabaseSession:
         exceptions into dependency generators. A simple 'raise' in async for
         body doesn't throw into the generator - it just propagates out.
         """
-        import app.db.session as session_module
         from contextlib import asynccontextmanager
+
+        import app.db.session as session_module
 
         mock_session = AsyncMock()
 

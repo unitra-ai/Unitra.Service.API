@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.core.limits import TIER_LIMITS, Tier, TierLimits, get_tier_limits
+from app.core.limits import TIER_LIMITS, Tier, get_tier_limits
 
 
 class TestTierLimits:
@@ -66,5 +66,6 @@ class TestTierLimits:
     def test_tier_limits_immutable(self) -> None:
         """Test TierLimits is immutable (frozen dataclass)."""
         limits = TIER_LIMITS[Tier.FREE]
-        with pytest.raises(Exception):  # FrozenInstanceError
+        # Frozen dataclasses raise FrozenInstanceError (subclass of AttributeError)
+        with pytest.raises(AttributeError):
             limits.tokens_per_week = 999  # type: ignore

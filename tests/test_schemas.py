@@ -17,7 +17,6 @@ from app.schemas.common import (
     TimestampMixin,
 )
 
-
 # =============================================================================
 # Error Schema Tests
 # =============================================================================
@@ -62,18 +61,14 @@ class TestErrorResponse:
 
     def test_create_error_response(self) -> None:
         """Test creating ErrorResponse."""
-        response = ErrorResponse(
-            error=ErrorDetail(code="ERROR", message="Something went wrong")
-        )
+        response = ErrorResponse(error=ErrorDetail(code="ERROR", message="Something went wrong"))
 
         assert response.error.code == "ERROR"
         assert response.error.message == "Something went wrong"
 
     def test_serialization(self) -> None:
         """Test ErrorResponse serialization."""
-        response = ErrorResponse(
-            error=ErrorDetail(code="NOT_FOUND", message="Resource not found")
-        )
+        response = ErrorResponse(error=ErrorDetail(code="NOT_FOUND", message="Resource not found"))
 
         data = response.model_dump()
 

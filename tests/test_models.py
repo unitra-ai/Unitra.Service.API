@@ -1,17 +1,12 @@
 """Tests for database models."""
 
-import uuid
-from datetime import datetime, timezone
 
-import pytest
 
 from app.models import (
     ProcessingLocation,
     RefreshToken,
-    Subscription,
     SubscriptionPlan,
     SubscriptionStatus,
-    UsageLog,
     User,
     UserTier,
 )

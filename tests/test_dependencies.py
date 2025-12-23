@@ -1,14 +1,12 @@
 """Tests for dependency injection."""
 
 from datetime import timedelta
-from unittest.mock import patch
 
 import pytest
 
 from app.core.exceptions import AuthenticationError
 from app.core.security import create_access_token, create_refresh_token
 from app.dependencies import get_current_user_id, get_optional_user_id
-
 
 # =============================================================================
 # get_current_user_id Tests
@@ -258,20 +256,14 @@ class TestConcurrentAccess:
         """Test multiple tokens can be validated concurrently."""
         import asyncio
 
-        tokens = [
-            create_access_token(data={"sub": f"user-{i}"})
-            for i in range(10)
-        ]
+        tokens = [create_access_token(data={"sub": f"user-{i}"}) for i in range(10)]
 
         async def validate_token(token: str, expected_id: str) -> bool:
             auth = f"Bearer {token}"
             user_id = await get_current_user_id(authorization=auth)
             return user_id == expected_id
 
-        tasks = [
-            validate_token(token, f"user-{i}")
-            for i, token in enumerate(tokens)
-        ]
+        tasks = [validate_token(token, f"user-{i}") for i, token in enumerate(tokens)]
 
         results = await asyncio.gather(*tasks)
 

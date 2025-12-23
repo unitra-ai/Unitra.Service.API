@@ -1,16 +1,16 @@
 """Extended tests for logging configuration."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 import logging
+from unittest.mock import MagicMock, patch
+
 import structlog
 
 from app.core.logging import (
-    setup_logging,
-    get_logger,
     LoggerMixin,
-    log_context,
     clear_log_context,
+    get_logger,
+    log_context,
+    setup_logging,
 )
 
 

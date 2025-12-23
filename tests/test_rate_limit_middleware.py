@@ -1,13 +1,13 @@
 """Tests for rate limiting middleware."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import FastAPI, Request
-from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock
 
-from app.core.middleware import RateLimitMiddleware
+import pytest
+from fastapi import FastAPI, Request
+from httpx import ASGITransport, AsyncClient
+
 from app.core.exceptions import RateLimitError
+from app.core.middleware import RateLimitMiddleware
 from app.db.redis import RedisClient
 
 
@@ -38,9 +38,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health")
 
         assert response.status_code == 200
@@ -58,9 +56,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/live")
 
         assert response.status_code == 200
@@ -78,9 +74,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/health/ready")
 
         assert response.status_code == 200
@@ -98,9 +92,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/version")
 
         assert response.status_code == 200
@@ -118,9 +110,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/test")
 
         assert response.status_code == 200
@@ -170,9 +160,7 @@ class TestRateLimitMiddleware:
         app.add_middleware(SetUserIdMiddleware)
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/test")
 
         assert response.status_code == 200
@@ -191,9 +179,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/test")
 
         assert response.status_code == 200
@@ -204,9 +190,7 @@ class TestRateLimitMiddleware:
         """Test middleware allows request when Redis fails."""
         app = FastAPI()
         mock_redis = AsyncMock(spec=RedisClient)
-        mock_redis.check_rate_limit = AsyncMock(
-            side_effect=Exception("Redis connection failed")
-        )
+        mock_redis.check_rate_limit = AsyncMock(side_effect=Exception("Redis connection failed"))
 
         @app.get("/api/test")
         async def test_endpoint():
@@ -214,9 +198,7 @@ class TestRateLimitMiddleware:
 
         app.add_middleware(RateLimitMiddleware, redis_client=mock_redis)
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/test")
 
         # Should allow request when Redis fails
@@ -239,9 +221,7 @@ class TestRateLimitMiddleware:
             window=120,
         )
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/test")
 
         assert response.status_code == 200
@@ -258,4 +238,4 @@ class TestRateLimitMiddleware:
             "/api/docs",
             "/api/openapi.json",
         }
-        assert RateLimitMiddleware.SKIP_PATHS == expected_paths
+        assert expected_paths == RateLimitMiddleware.SKIP_PATHS

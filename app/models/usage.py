@@ -57,9 +57,7 @@ class UsageLog(Base):
         nullable=False,
     )
 
-    __table_args__ = (
-        Index("ix_usage_logs_user_created", "user_id", "created_at"),
-    )
+    __table_args__ = (Index("ix_usage_logs_user_created", "user_id", "created_at"),)
 
     def __repr__(self) -> str:
         return f"<UsageLog(id={self.id}, user_id={self.user_id}, tokens={self.tokens_used})>"

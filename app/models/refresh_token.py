@@ -49,7 +49,7 @@ class RefreshToken(Base, TimestampMixin):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         "User",
         back_populates="refresh_tokens",
     )

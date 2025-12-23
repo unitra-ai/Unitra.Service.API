@@ -1,12 +1,12 @@
 """Tests for UserManager lifecycle hooks."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, timezone
 from uuid import uuid4
 
+import pytest
+
 from app.auth.manager import UserManager
-from app.auth.models import User, UserTier, TIER_LIMITS
+from app.auth.models import TIER_LIMITS, User, UserTier
 
 
 class TestUserManagerHooks:
@@ -72,9 +72,7 @@ class TestOnAfterRegister(TestUserManagerHooks):
         assert mock_user.translation_minutes_limit == TIER_LIMITS[UserTier.PRO]["minutes"]
 
     @pytest.mark.asyncio
-    async def test_logs_registration(
-        self, user_manager: UserManager, mock_user: MagicMock
-    ) -> None:
+    async def test_logs_registration(self, user_manager: UserManager, mock_user: MagicMock) -> None:
         """Test registration logs event."""
         with patch("app.auth.manager.logger") as mock_logger:
             await user_manager.on_after_register(mock_user)
@@ -165,9 +163,7 @@ class TestOnAfterForgotPassword(TestUserManagerHooks):
     ) -> None:
         """Test forgot password logs request."""
         with patch("app.auth.manager.logger") as mock_logger:
-            await user_manager.on_after_forgot_password(
-                mock_user, "reset-token-123"
-            )
+            await user_manager.on_after_forgot_password(mock_user, "reset-token-123")
 
             # Check info log
             info_calls = [c for c in mock_logger.info.call_args_list]
@@ -202,9 +198,7 @@ class TestOnAfterRequestVerify(TestUserManagerHooks):
     ) -> None:
         """Test request verify logs event."""
         with patch("app.auth.manager.logger") as mock_logger:
-            await user_manager.on_after_request_verify(
-                mock_user, "verify-token-123"
-            )
+            await user_manager.on_after_request_verify(mock_user, "verify-token-123")
 
             info_calls = [c for c in mock_logger.info.call_args_list]
             assert any("verification_requested" in str(c) for c in info_calls)
@@ -254,8 +248,7 @@ class TestOnBeforeDelete(TestUserManagerHooks):
 
             debug_calls = [c for c in mock_logger.debug.call_args_list]
             assert any(
-                "stripe_subscription_cancellation_placeholder" in str(c)
-                for c in debug_calls
+                "stripe_subscription_cancellation_placeholder" in str(c) for c in debug_calls
             )
 
 
@@ -278,9 +271,7 @@ class TestOnAfterUpdate(TestUserManagerHooks):
     """Tests for on_after_update hook."""
 
     @pytest.mark.asyncio
-    async def test_logs_update(
-        self, user_manager: UserManager, mock_user: MagicMock
-    ) -> None:
+    async def test_logs_update(self, user_manager: UserManager, mock_user: MagicMock) -> None:
         """Test update logs event."""
         update_dict = {"email": "new@example.com", "tier": "pro"}
 

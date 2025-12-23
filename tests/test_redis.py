@@ -1,16 +1,15 @@
 """Tests for Redis client."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import timedelta
+
+import pytest
 
 from app.db.redis import (
     RedisClient,
-    init_redis,
     close_redis,
     get_redis,
     get_redis_client,
-    _redis_client,
+    init_redis,
 )
 
 

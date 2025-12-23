@@ -1,6 +1,7 @@
 """JWT Authentication backend for FastAPI-Users."""
 
 import uuid
+from typing import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends
@@ -29,7 +30,7 @@ settings = get_settings()
 
 async def get_user_db(
     session: AsyncSession = Depends(get_db_session),
-) -> SQLAlchemyUserDatabase[User, UUID]:
+) -> AsyncGenerator[SQLAlchemyUserDatabase[User, UUID], None]:
     """Get SQLAlchemy user database adapter."""
     yield SQLAlchemyUserDatabase(session, User)
 
@@ -41,7 +42,7 @@ async def get_user_db(
 
 async def get_user_manager(
     user_db: SQLAlchemyUserDatabase[User, UUID] = Depends(get_user_db),
-) -> UserManager:
+) -> AsyncGenerator[UserManager, None]:
     """Get user manager instance."""
     yield UserManager(user_db)
 
@@ -68,9 +69,7 @@ class CustomJWTStrategy(JWTStrategy[User, UUID]):
             "tier": user.tier,
             "minutes_remaining": user.minutes_remaining,
         }
-        return generate_jwt(
-            data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
-        )
+        return generate_jwt(data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm)
 
 
 def get_jwt_strategy() -> CustomJWTStrategy:

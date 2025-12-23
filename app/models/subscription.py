@@ -80,10 +80,13 @@ class Subscription(Base, TimestampMixin):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         "User",
         back_populates="subscriptions",
     )
 
     def __repr__(self) -> str:
-        return f"<Subscription(id={self.id}, user_id={self.user_id}, plan={self.plan}, status={self.status})>"
+        return (
+            f"<Subscription(id={self.id}, user_id={self.user_id}, "
+            f"plan={self.plan}, status={self.status})>"
+        )
