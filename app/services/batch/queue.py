@@ -22,7 +22,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from heapq import heappop, heappush
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.services.batch.config import TIER_CONFIGS, UserTier
 
@@ -41,7 +41,9 @@ class TranslationRequest:
     tier: UserTier
     request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: float = field(default_factory=time.time)
-    future: Future[dict] = field(default_factory=lambda: asyncio.get_event_loop().create_future())
+    future: Future[dict[str, Any]] = field(
+        default_factory=lambda: asyncio.get_event_loop().create_future()
+    )
 
     def get_priority(self, starvation_boost_per_sec: float = 0.5) -> float:
         """Calculate dynamic priority.
@@ -236,7 +238,7 @@ class TranslationQueue:
         """Check if queue is empty."""
         return self._size == 0
 
-    def get_metrics(self) -> dict:
+    def get_metrics(self) -> dict[str, Any]:
         """Get queue metrics.
 
         Returns:

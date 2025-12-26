@@ -14,6 +14,7 @@ import statistics
 import time
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Any
 
 from app.services.batch.config import TIER_CONFIGS, UserTier
 
@@ -162,7 +163,7 @@ class BatchMetricsCollector:
         """
         return {tier.value: self.get_latency_by_tier(tier) for tier in UserTier}
 
-    def get_batch_size_stats(self) -> dict:
+    def get_batch_size_stats(self) -> dict[str, Any]:
         """Get batch size statistics.
 
         Returns:
@@ -178,7 +179,7 @@ class BatchMetricsCollector:
             "count": len(self._batch_sizes),
         }
 
-    def get_queue_depth_stats(self) -> dict:
+    def get_queue_depth_stats(self) -> dict[str, Any]:
         """Get queue depth statistics.
 
         Returns:
@@ -241,7 +242,7 @@ class BatchMetricsCollector:
 
         return results
 
-    def get_summary(self) -> dict:
+    def get_summary(self) -> dict[str, Any]:
         """Get comprehensive metrics summary.
 
         Returns:

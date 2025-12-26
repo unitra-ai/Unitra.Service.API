@@ -19,7 +19,7 @@ from __future__ import annotations
 import asyncio
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -259,7 +259,7 @@ class SmartBatcher:
                     request.future.set_exception(e)
             raise
 
-    def get_metrics(self) -> dict:
+    def get_metrics(self) -> dict[str, Any]:
         """Get batcher metrics.
 
         Returns:

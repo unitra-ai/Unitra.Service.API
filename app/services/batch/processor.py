@@ -136,9 +136,10 @@ class BatchProcessor:
 
                 # Extract translations
                 if len(texts) == 1:
-                    return [result["translation"]]
+                    return [str(result["translation"])]
                 else:
-                    return result["translations"]
+                    translations: list[str] = result["translations"]
+                    return translations
 
             except httpx.HTTPStatusError as e:
                 last_error = e
@@ -213,7 +214,7 @@ class BatchProcessor:
         results = await self.translate_batch([text], source_lang, target_lang)
         return results[0]
 
-    async def health_check(self) -> dict:
+    async def health_check(self) -> dict[str, Any]:
         """Check Modal service health.
 
         Returns:
@@ -225,12 +226,13 @@ class BatchProcessor:
         try:
             response = await client.get(health_url)
             response.raise_for_status()
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
         except Exception as e:
             logger.error("health_check_failed", error=str(e))
             return {"status": "unhealthy", "error": str(e)}
 
-    def get_metrics(self) -> dict:
+    def get_metrics(self) -> dict[str, Any]:
         """Get processor metrics.
 
         Returns:
