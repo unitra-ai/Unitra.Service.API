@@ -1,5 +1,10 @@
 # Deploy to Production (Dokploy on DigitalOcean)
 # Triggered when a release is published (requires manual approval)
+#
+# Runner Configuration:
+#   - Set RUNNER_LABEL variable to 'self-hosted' to use self-hosted runners
+#   - Defaults to 'ubuntu-latest' if not set
+#
 name: Deploy to Production
 
 on:
@@ -18,7 +23,7 @@ jobs:
   # ============================================
   validate:
     name: Validate Release
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -46,7 +51,7 @@ jobs:
   # ============================================
   integration-gate:
     name: Integration Test Gate
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: validate
 
     steps:
@@ -109,7 +114,7 @@ jobs:
   # ============================================
   build:
     name: Build Production Image
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: validate
     permissions:
       contents: read
@@ -151,7 +156,7 @@ jobs:
   # ============================================
   deploy:
     name: Deploy to Dokploy
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: [validate, integration-gate, build]
     environment: production  # Requires manual approval in GitHub settings
 
@@ -231,7 +236,7 @@ jobs:
   # ============================================
   migrate:
     name: Run Database Migrations
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: deploy
     environment: production
     if: ${{ vars.RUN_MIGRATIONS == 'true' }}
@@ -256,7 +261,7 @@ jobs:
   # ============================================
   notify:
     name: Send Notifications
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: [validate, deploy]
     if: always()
 

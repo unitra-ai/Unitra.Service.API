@@ -1,3 +1,9 @@
+# Claude Code Review
+#
+# Runner Configuration:
+#   - Set RUNNER_LABEL variable to 'self-hosted' to use self-hosted runners
+#   - Defaults to 'ubuntu-latest' if not set
+#
 name: Claude Code Review
 
 on:
@@ -18,7 +24,7 @@ jobs:
     #   github.event.pull_request.user.login == 'new-developer' ||
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     permissions:
       contents: read
       pull-requests: read

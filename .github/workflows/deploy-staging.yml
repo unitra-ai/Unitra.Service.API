@@ -1,5 +1,10 @@
 # Deploy to Staging (Dokploy on DigitalOcean)
 # Automatically deploys when code is pushed to main branch
+#
+# Runner Configuration:
+#   - Set RUNNER_LABEL variable to 'self-hosted' to use self-hosted runners
+#   - Defaults to 'ubuntu-latest' if not set
+#
 name: Deploy to Staging
 
 on:
@@ -13,7 +18,7 @@ env:
 jobs:
   build:
     name: Build & Push Image
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     permissions:
       contents: read
       packages: write
@@ -59,7 +64,7 @@ jobs:
 
   deploy:
     name: Deploy to Dokploy
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: build
     environment: staging
 
@@ -131,7 +136,7 @@ jobs:
 
   notify:
     name: Send Notification
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
     needs: [build, deploy]
     if: always()
 
