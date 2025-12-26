@@ -47,6 +47,12 @@ class TestSetupLogging:
 
     def test_setup_logging_sets_log_level(self) -> None:
         """Test logging setup sets correct log level."""
+        # Reset logging state before test (basicConfig is no-op if handlers exist)
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers[:]:
+            root_logger.removeHandler(handler)
+        root_logger.setLevel(logging.NOTSET)
+
         with patch("app.core.logging.get_settings") as mock_settings:
             mock_settings.return_value = MagicMock(
                 environment="development",
@@ -56,7 +62,6 @@ class TestSetupLogging:
             setup_logging()
 
             # Root logger should be at DEBUG in debug mode
-            root_logger = logging.getLogger()
             assert root_logger.level == logging.DEBUG
 
     def test_setup_logging_suppresses_noisy_loggers(self) -> None:

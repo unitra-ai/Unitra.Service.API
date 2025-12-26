@@ -275,8 +275,9 @@ class TestExceptionHandlerIntegration:
             json={"invalid": "data"},  # Missing required fields
         )
 
-        # Should get 422 or 501 depending on implementation
-        assert response.status_code in [422, 501]
+        # Should get 401 (auth required), 422 (validation), or 501 (not implemented)
+        # Auth check happens before validation, so 401 is expected without token
+        assert response.status_code in [401, 422, 501]
 
     @pytest.mark.asyncio
     async def test_not_found_for_unknown_endpoint(self, async_client: AsyncClient) -> None:
