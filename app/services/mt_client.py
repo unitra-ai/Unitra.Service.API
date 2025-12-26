@@ -66,22 +66,29 @@ class MTClient:
         self,
         base_url: str | None = None,
         timeout: float = 60.0,
+        api_key: str | None = None,
     ):
         """Initialize the MT client.
 
         Args:
             base_url: Base URL of the Modal web endpoint.
             timeout: Request timeout in seconds.
+            api_key: API key for authenticating with the ML service.
         """
         settings = get_settings()
         self.base_url = (base_url or settings.ml_service_url or self.DEFAULT_BASE_URL).rstrip("/")
         self.timeout = timeout
+        self.api_key = api_key or settings.modal_api_key
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> "MTClient":
         """Enter async context manager."""
+        headers = {}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
         self._client = httpx.AsyncClient(
             timeout=httpx.Timeout(self.timeout),
+            headers=headers,
         )
         return self
 

@@ -43,6 +43,7 @@ class BatchProcessor:
         modal_endpoint: str | None = None,
         timeout_seconds: float = 30.0,
         max_retries: int = 2,
+        api_key: str | None = None,
     ):
         """Initialize the batch processor.
 
@@ -50,6 +51,7 @@ class BatchProcessor:
             modal_endpoint: Modal MT service endpoint URL
             timeout_seconds: Request timeout in seconds
             max_retries: Maximum retry attempts for failed requests
+            api_key: API key for authenticating with the ML service
         """
         settings = get_settings()
         self.modal_endpoint = (
@@ -57,6 +59,7 @@ class BatchProcessor:
         ).rstrip("/")
         self.timeout = timeout_seconds
         self.max_retries = max_retries
+        self.api_key = api_key or settings.modal_api_key
 
         self._client: httpx.AsyncClient | None = None
 
@@ -71,9 +74,13 @@ class BatchProcessor:
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
         if self._client is None or self._client.is_closed:
+            headers = {}
+            if self.api_key:
+                headers["X-API-Key"] = self.api_key
             self._client = httpx.AsyncClient(
                 timeout=httpx.Timeout(self.timeout),
                 limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+                headers=headers,
             )
         return self._client
 
