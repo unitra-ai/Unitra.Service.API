@@ -134,7 +134,7 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
     3. Mocks Redis client for testing
     4. Provides an async HTTP client for making requests
     """
-    from app.db.redis import RedisClient, get_redis
+    from app.db.redis import RedisClient, get_redis, get_redis_client
     from app.db.session import get_db_session
 
     # Create async session factory for test database
@@ -165,13 +165,20 @@ async def async_client(test_db_engine) -> AsyncGenerator[AsyncClient, None]:
     mock_redis.set_session = AsyncMock()
     mock_redis.check_rate_limit = AsyncMock(return_value=(True, 99))
     mock_redis.get_rate_limit_ttl = AsyncMock(return_value=60)
+    # Usage tracking methods for translation endpoints
+    mock_redis.get_usage = AsyncMock(return_value=0)
+    mock_redis.increment_usage = AsyncMock(return_value=100)
 
     def override_get_redis() -> RedisClient:
         return mock_redis
 
+    async def override_get_redis_client() -> AsyncGenerator[RedisClient, None]:
+        yield mock_redis
+
     # Override the dependencies
     app.dependency_overrides[get_db_session] = override_get_db_session
     app.dependency_overrides[get_redis] = override_get_redis
+    app.dependency_overrides[get_redis_client] = override_get_redis_client
 
     async with AsyncClient(
         transport=ASGITransport(app=app),

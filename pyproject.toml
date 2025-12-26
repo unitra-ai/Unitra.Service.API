@@ -30,6 +30,7 @@ aiosmtplib = "^3.0.0"
 pytest = "^7.4.0"
 pytest-asyncio = "^0.23.0"
 pytest-cov = "^4.1.0"
+pytest-timeout = "^2.2.0"
 black = "^24.1.0"
 ruff = "^0.1.0"
 mypy = "^1.8.0"
@@ -66,6 +67,14 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "integration: mark test as integration test (requires external services like Modal)",
+    "slow: mark test as slow (may take >10s)",
+]
+# Default: skip integration tests unless explicitly requested
+addopts = "-m 'not integration'"
+# Timeout for all tests (can be overridden with @pytest.mark.timeout)
+timeout = 30
 
 [tool.commitizen]
 name = "cz_conventional_commits"
