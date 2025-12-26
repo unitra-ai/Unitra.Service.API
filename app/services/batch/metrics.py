@@ -228,9 +228,7 @@ class BatchMetricsCollector:
             metrics = self.get_latency_by_tier(tier)
 
             # SLA is met if p95 is within 20% of target
-            sla_met = (
-                metrics.p95 <= config.target_latency_ms * 1.2 if metrics.count > 0 else True
-            )
+            sla_met = metrics.p95 <= config.target_latency_ms * 1.2 if metrics.count > 0 else True
 
             results[tier.value] = SLAStatus(
                 tier=tier.value,
@@ -263,9 +261,7 @@ class BatchMetricsCollector:
                     "avg": round(m.avg, 2),
                     "count": m.count,
                 }
-                for tier, m in [
-                    (t, self.get_latency_by_tier(t)) for t in UserTier
-                ]
+                for tier, m in [(t, self.get_latency_by_tier(t)) for t in UserTier]
                 if m.count > 0
             },
             "sla_status": {

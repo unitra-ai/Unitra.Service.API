@@ -77,13 +77,17 @@ async def test_multi_language():
                 )
                 elapsed = (time.time() - start) * 1000
 
-                results.append({
-                    "pair": desc,
-                    "source": text,
-                    "translation": result["translation"],
-                    "latency_ms": elapsed,
-                })
-                print(f"✓ {desc}: {text[:25]}... → {result['translation'][:30]}... ({elapsed:.0f}ms)")
+                results.append(
+                    {
+                        "pair": desc,
+                        "source": text,
+                        "translation": result["translation"],
+                        "latency_ms": elapsed,
+                    }
+                )
+                print(
+                    f"✓ {desc}: {text[:25]}... → {result['translation'][:30]}... ({elapsed:.0f}ms)"
+                )
 
             except Exception as e:
                 errors.append((desc, str(e)))
@@ -123,11 +127,13 @@ async def test_gaming_context():
                 tier=UserTier.PRO,
                 timeout=90.0,
             )
-            results.append({
-                "source": text,
-                "translation": result["translation"],
-                "pair": f"{src}→{tgt}",
-            })
+            results.append(
+                {
+                    "source": text,
+                    "translation": result["translation"],
+                    "pair": f"{src}→{tgt}",
+                }
+            )
             print(f"✓ [{src}→{tgt}] {text} → {result['translation']}")
 
     finally:
@@ -209,7 +215,9 @@ async def test_tier_comparison():
             elapsed = time.time() - start
 
             tier_times[tier.value] = elapsed
-            print(f"{tier.value.upper():12} - {len(texts)} requests in {elapsed:.2f}s ({elapsed/len(texts):.2f}s/req)")
+            print(
+                f"{tier.value.upper():12} - {len(texts)} requests in {elapsed:.2f}s ({elapsed/len(texts):.2f}s/req)"
+            )
 
     finally:
         await service.stop()
@@ -229,6 +237,7 @@ async def test_concurrent_requests():
     num_requests = 10
 
     try:
+
         async def make_request(idx: int) -> dict:
             tier = [UserTier.FREE, UserTier.BASIC, UserTier.PRO, UserTier.ENTERPRISE][idx % 4]
             result = await service.translate(

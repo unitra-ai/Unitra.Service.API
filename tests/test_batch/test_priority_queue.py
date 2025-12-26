@@ -29,20 +29,20 @@ class TestPriorityOrdering:
         # Submit in random order
         requests = [
             TranslationRequest(
-                text="free", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.FREE
+                text="free", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.FREE
             ),
             TranslationRequest(
-                text="enterprise", source_lang="en", target_lang="zh",
-                user_id="u2", tier=UserTier.ENTERPRISE
+                text="enterprise",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u2",
+                tier=UserTier.ENTERPRISE,
             ),
             TranslationRequest(
-                text="basic", source_lang="en", target_lang="zh",
-                user_id="u3", tier=UserTier.BASIC
+                text="basic", source_lang="en", target_lang="zh", user_id="u3", tier=UserTier.BASIC
             ),
             TranslationRequest(
-                text="pro", source_lang="en", target_lang="zh",
-                user_id="u4", tier=UserTier.PRO
+                text="pro", source_lang="en", target_lang="zh", user_id="u4", tier=UserTier.PRO
             ),
         ]
 
@@ -73,8 +73,11 @@ class TestPriorityOrdering:
 
         for i in range(5):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id=f"u{i}", tier=UserTier.BASIC
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id=f"u{i}",
+                tier=UserTier.BASIC,
             )
             await queue.put(req)
             await asyncio.sleep(0.01)  # Small delay to ensure order
@@ -97,16 +100,18 @@ class TestStarvationPrevention:
         # Submit Free request with old timestamp (8 seconds ago)
         old_time = time.time() - 8
         free_req = TranslationRequest(
-            text="free_old", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.FREE
+            text="free_old", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.FREE
         )
         free_req.timestamp = old_time
         await queue.put(free_req)
 
         # Submit new Enterprise request
         enterprise_req = TranslationRequest(
-            text="enterprise_new", source_lang="en", target_lang="zh",
-            user_id="u2", tier=UserTier.ENTERPRISE
+            text="enterprise_new",
+            source_lang="en",
+            target_lang="zh",
+            user_id="u2",
+            tier=UserTier.ENTERPRISE,
         )
         await queue.put(enterprise_req)
 
@@ -121,8 +126,7 @@ class TestStarvationPrevention:
     async def test_priority_calculation(self) -> None:
         """Test dynamic priority calculation."""
         req = TranslationRequest(
-            text="test", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.BASIC
+            text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.BASIC
         )
 
         # Initial priority
@@ -149,8 +153,11 @@ class TestConcurrentAccess:
         async def producer() -> None:
             for i in range(num_requests):
                 req = TranslationRequest(
-                    text=f"text_{i}", source_lang="en", target_lang="zh",
-                    user_id=f"u{i}", tier=UserTier.BASIC
+                    text=f"text_{i}",
+                    source_lang="en",
+                    target_lang="zh",
+                    user_id=f"u{i}",
+                    tier=UserTier.BASIC,
                 )
                 await queue.put(req)
                 await asyncio.sleep(0.001)
@@ -178,8 +185,11 @@ class TestConcurrentAccess:
         # Pre-fill queue
         for i in range(num_requests):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id=f"u{i}", tier=UserTier.BASIC
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id=f"u{i}",
+                tier=UserTier.BASIC,
             )
             await queue.put(req)
 
@@ -212,8 +222,7 @@ class TestQueueMetrics:
         # Submit requests of different tiers
         for tier in [UserTier.FREE, UserTier.BASIC, UserTier.PRO, UserTier.ENTERPRISE]:
             req = TranslationRequest(
-                text="test", source_lang="en", target_lang="zh",
-                user_id="u1", tier=tier
+                text="test", source_lang="en", target_lang="zh", user_id="u1", tier=tier
             )
             await queue.put(req)
 
@@ -238,8 +247,7 @@ class TestQueueMetrics:
 
         for _ in range(5):
             req = TranslationRequest(
-                text="test", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.BASIC
+                text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.BASIC
             )
             await queue.put(req)
             await queue.get(timeout=0.1)
@@ -268,8 +276,7 @@ class TestQueueOperations:
         queue = TranslationQueue()
 
         req = TranslationRequest(
-            text="test", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.PRO
+            text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.PRO
         )
         await queue.put(req)
 
@@ -291,8 +298,7 @@ class TestQueueOperations:
         assert queue.qsize() == 0
 
         req = TranslationRequest(
-            text="test", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.BASIC
+            text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.BASIC
         )
         await queue.put(req)
 

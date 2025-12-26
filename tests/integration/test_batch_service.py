@@ -28,21 +28,92 @@ class TestMultiLanguageTranslation:
     # Test data for various language pairs
     LANGUAGE_TEST_CASES = [
         # (source_text, source_lang, target_lang, description, validation_func)
-        ("Hello, how are you?", "en", "zh", "EN→ZH", lambda t: any("\u4e00" <= c <= "\u9fff" for c in t)),
-        ("你好，最近怎么样？", "zh", "en", "ZH→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("こんにちは、お元気ですか？", "ja", "en", "JA→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("안녕하세요, 어떻게 지내세요?", "ko", "en", "KO→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Bonjour, comment allez-vous?", "fr", "en", "FR→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Hallo, wie geht es Ihnen?", "de", "en", "DE→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Hola, ¿cómo estás?", "es", "en", "ES→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Olá, como você está?", "pt", "en", "PT→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Привет, как дела?", "ru", "en", "RU→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("مرحبا، كيف حالك؟", "ar", "en", "AR→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("สวัสดี สบายดีไหม?", "th", "en", "TH→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
-        ("Xin chào, bạn khỏe không?", "vi", "en", "VI→EN", lambda t: any(c.isascii() and c.isalpha() for c in t)),
+        (
+            "Hello, how are you?",
+            "en",
+            "zh",
+            "EN→ZH",
+            lambda t: any("\u4e00" <= c <= "\u9fff" for c in t),
+        ),
+        (
+            "你好，最近怎么样？",
+            "zh",
+            "en",
+            "ZH→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "こんにちは、お元気ですか？",
+            "ja",
+            "en",
+            "JA→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "안녕하세요, 어떻게 지내세요?",
+            "ko",
+            "en",
+            "KO→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Bonjour, comment allez-vous?",
+            "fr",
+            "en",
+            "FR→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Hallo, wie geht es Ihnen?",
+            "de",
+            "en",
+            "DE→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Hola, ¿cómo estás?",
+            "es",
+            "en",
+            "ES→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Olá, como você está?",
+            "pt",
+            "en",
+            "PT→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Привет, как дела?",
+            "ru",
+            "en",
+            "RU→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "مرحبا، كيف حالك؟",
+            "ar",
+            "en",
+            "AR→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "สวัสดี สบายดีไหม?",
+            "th",
+            "en",
+            "TH→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
+        (
+            "Xin chào, bạn khỏe không?",
+            "vi",
+            "en",
+            "VI→EN",
+            lambda t: any(c.isascii() and c.isalpha() for c in t),
+        ),
     ]
 
-    
     async def test_batch_service_multi_language(
         self,
         skip_if_no_modal,
@@ -77,13 +148,15 @@ class TestMultiLanguageTranslation:
                     translation = result["translation"]
                     is_valid = validate(translation)
 
-                    results.append({
-                        "pair": desc,
-                        "source": text,
-                        "translation": translation,
-                        "valid": is_valid,
-                        "latency_ms": result.get("latency_ms", 0),
-                    })
+                    results.append(
+                        {
+                            "pair": desc,
+                            "source": text,
+                            "translation": translation,
+                            "valid": is_valid,
+                            "latency_ms": result.get("latency_ms", 0),
+                        }
+                    )
 
                     if not is_valid:
                         print(f"Warning: {desc} validation failed - {translation}")
@@ -114,7 +187,6 @@ class TestMultiLanguageTranslation:
 class TestBatchServiceCJK:
     """Focused tests for CJK (Chinese-Japanese-Korean) languages."""
 
-    
     async def test_cjk_translations(
         self,
         skip_if_no_modal,
@@ -157,11 +229,13 @@ class TestBatchServiceCJK:
                     tier=UserTier.BASIC,
                     timeout=60.0,
                 )
-                results.append({
-                    "source": text,
-                    "translation": result["translation"],
-                    "pair": f"{src}→{tgt}",
-                })
+                results.append(
+                    {
+                        "source": text,
+                        "translation": result["translation"],
+                        "pair": f"{src}→{tgt}",
+                    }
+                )
 
             # Print results
             print("\n" + "=" * 60)
@@ -186,7 +260,6 @@ class TestBatchServiceCJK:
 class TestTierPrioritization:
     """Test tier-based request prioritization."""
 
-    
     async def test_enterprise_priority_over_free(
         self,
         skip_if_no_modal,
@@ -209,17 +282,19 @@ class TestTierPrioritization:
 
             async def timed_translate(tier: UserTier) -> tuple[UserTier, float]:
                 start = time.time()
-                results = await asyncio.gather(*[
-                    service.translate(
-                        text=t,
-                        source_lang="en",
-                        target_lang="zh",
-                        user_id=f"user_{tier.value}",
-                        tier=tier,
-                        timeout=120.0,
-                    )
-                    for t in texts
-                ])
+                results = await asyncio.gather(
+                    *[
+                        service.translate(
+                            text=t,
+                            source_lang="en",
+                            target_lang="zh",
+                            user_id=f"user_{tier.value}",
+                            tier=tier,
+                            timeout=120.0,
+                        )
+                        for t in texts
+                    ]
+                )
                 elapsed = time.time() - start
                 return tier, elapsed
 
@@ -254,7 +329,6 @@ class TestTierPrioritization:
 class TestConcurrentRequests:
     """Test service under concurrent load."""
 
-    
     async def test_concurrent_translations(
         self,
         skip_if_no_modal,
@@ -275,6 +349,7 @@ class TestConcurrentRequests:
         tiers = [UserTier.FREE, UserTier.BASIC, UserTier.PRO, UserTier.ENTERPRISE]
 
         try:
+
             async def make_request(idx: int) -> dict[str, Any]:
                 tier = tiers[idx % len(tiers)]
                 start = time.time()
@@ -329,7 +404,6 @@ class TestConcurrentRequests:
         finally:
             await service.stop()
 
-    
     async def test_batch_translate_api(
         self,
         skip_if_no_modal,
@@ -389,7 +463,6 @@ class TestConcurrentRequests:
 class TestMetricsCollection:
     """Test metrics collection and accuracy."""
 
-    
     async def test_metrics_accuracy(
         self,
         skip_if_no_modal,
@@ -451,7 +524,6 @@ class TestMetricsCollection:
 class TestServiceLifecycle:
     """Test service start/stop behavior with real service."""
 
-    
     async def test_service_restart(
         self,
         skip_if_no_modal,
@@ -501,7 +573,6 @@ class TestServiceLifecycle:
 
         await service.stop()
 
-    
     async def test_health_check_integration(
         self,
         skip_if_no_modal,

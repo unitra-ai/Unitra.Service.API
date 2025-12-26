@@ -53,8 +53,11 @@ class TestBatchSizeLimits:
         # Submit 50 Free requests
         for i in range(50):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.FREE
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.FREE,
             )
             await queue.put(req)
 
@@ -71,8 +74,11 @@ class TestBatchSizeLimits:
         # Submit 20 Enterprise requests
         for i in range(20):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.ENTERPRISE
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.ENTERPRISE,
             )
             await queue.put(req)
 
@@ -92,13 +98,13 @@ class TestBatchWaitTime:
         """Batch should be processed within max_wait time."""
         # Submit 1 Enterprise request (max_wait=20ms)
         req = TranslationRequest(
-            text="test", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.ENTERPRISE
+            text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.ENTERPRISE
         )
         await queue.put(req)
 
         # Collect batch - should return quickly due to max_wait
         import time
+
         start = time.time()
         batch = await batcher.collect_batch()
         elapsed_ms = (time.time() - start) * 1000
@@ -121,8 +127,11 @@ class TestAdaptiveSizing:
         # Submit 5 requests
         for i in range(5):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.FREE
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.FREE,
             )
             await queue.put(req)
 
@@ -141,8 +150,11 @@ class TestAdaptiveSizing:
         # Submit 5 Free requests
         for i in range(5):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.FREE
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.FREE,
             )
             await queue.put(req)
 
@@ -161,15 +173,21 @@ class TestPriorityInterruption:
         # Submit 3 Free requests (needs 8 for min_batch)
         for i in range(3):
             req = TranslationRequest(
-                text=f"free_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.FREE
+                text=f"free_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.FREE,
             )
             await queue.put(req)
 
         # Add an Enterprise request (higher priority)
         enterprise_req = TranslationRequest(
-            text="enterprise", source_lang="en", target_lang="zh",
-            user_id="u2", tier=UserTier.ENTERPRISE
+            text="enterprise",
+            source_lang="en",
+            target_lang="zh",
+            user_id="u2",
+            tier=UserTier.ENTERPRISE,
         )
 
         # Start collecting batch, then add enterprise
@@ -198,8 +216,11 @@ class TestResultDistribution:
         requests = []
         for i in range(5):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.BASIC
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.BASIC,
             )
             await queue.put(req)
             requests.append(req)
@@ -221,16 +242,17 @@ class TestResultDistribution:
         self, queue: TranslationQueue, mock_processor: MagicMock
     ) -> None:
         """Errors should be distributed to all requests in batch."""
-        mock_processor.translate_batch = AsyncMock(
-            side_effect=Exception("Translation failed")
-        )
+        mock_processor.translate_batch = AsyncMock(side_effect=Exception("Translation failed"))
         batcher = SmartBatcher(queue, mock_processor)
 
         requests = []
         for i in range(3):
             req = TranslationRequest(
-                text=f"text_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.BASIC
+                text=f"text_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.BASIC,
             )
             await queue.put(req)
             requests.append(req)
@@ -256,15 +278,17 @@ class TestLanguagePairBatching:
         # Submit en->zh requests
         for i in range(3):
             req = TranslationRequest(
-                text=f"en_zh_{i}", source_lang="en", target_lang="zh",
-                user_id="u1", tier=UserTier.BASIC
+                text=f"en_zh_{i}",
+                source_lang="en",
+                target_lang="zh",
+                user_id="u1",
+                tier=UserTier.BASIC,
             )
             await queue.put(req)
 
         # Submit zh->en request (different pair)
         diff_req = TranslationRequest(
-            text="zh_en", source_lang="zh", target_lang="en",
-            user_id="u2", tier=UserTier.BASIC
+            text="zh_en", source_lang="zh", target_lang="en", user_id="u2", tier=UserTier.BASIC
         )
         await queue.put(diff_req)
 
@@ -283,16 +307,17 @@ class TestBatcherMetrics:
     """Test batcher metrics tracking."""
 
     @pytest.mark.asyncio
-    async def test_metrics_tracking(
-        self, queue: TranslationQueue, batcher: SmartBatcher
-    ) -> None:
+    async def test_metrics_tracking(self, queue: TranslationQueue, batcher: SmartBatcher) -> None:
         """Test that metrics are correctly tracked."""
         # Process a few batches
         for batch_num in range(3):
             for i in range(4):
                 req = TranslationRequest(
-                    text=f"text_{batch_num}_{i}", source_lang="en", target_lang="zh",
-                    user_id="u1", tier=UserTier.BASIC
+                    text=f"text_{batch_num}_{i}",
+                    source_lang="en",
+                    target_lang="zh",
+                    user_id="u1",
+                    tier=UserTier.BASIC,
                 )
                 await queue.put(req)
 
@@ -304,13 +329,10 @@ class TestBatcherMetrics:
         assert metrics["avg_batch_size"] == 4.0
 
     @pytest.mark.asyncio
-    async def test_metrics_reset(
-        self, queue: TranslationQueue, batcher: SmartBatcher
-    ) -> None:
+    async def test_metrics_reset(self, queue: TranslationQueue, batcher: SmartBatcher) -> None:
         """Test metrics reset."""
         req = TranslationRequest(
-            text="test", source_lang="en", target_lang="zh",
-            user_id="u1", tier=UserTier.BASIC
+            text="test", source_lang="en", target_lang="zh", user_id="u1", tier=UserTier.BASIC
         )
         await queue.put(req)
         await batcher.collect_and_process()

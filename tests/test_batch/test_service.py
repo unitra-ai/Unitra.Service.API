@@ -24,6 +24,7 @@ from app.services.batch import (
 @pytest.fixture
 def mock_modal_response():
     """Mock Modal service response."""
+
     async def mock_post(url: str, json: dict):
         class MockResponse:
             status_code = 200
@@ -166,9 +167,7 @@ class TestTierDifferentiation:
         assert "translation" in result
 
     @pytest.mark.asyncio
-    async def test_invalid_tier_defaults_to_free(
-        self, service: BatchTranslationService
-    ) -> None:
+    async def test_invalid_tier_defaults_to_free(self, service: BatchTranslationService) -> None:
         """Test invalid tier string defaults to FREE."""
         result = await service.translate(
             text="test",

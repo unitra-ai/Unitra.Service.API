@@ -339,7 +339,11 @@ class BatchTranslationService:
         modal_health = await self.processor.health_check()
 
         return {
-            "status": "healthy" if self._running and modal_health.get("status") == "healthy" else "unhealthy",
+            "status": (
+                "healthy"
+                if self._running and modal_health.get("status") == "healthy"
+                else "unhealthy"
+            ),
             "running": self._running,
             "workers_active": len([w for w in self._workers if not w.done()]),
             "queue_size": self.queue.qsize(),
@@ -361,8 +365,10 @@ class BatchTranslationService:
             "batcher": self.batcher.get_metrics(),
             "processor": self.processor.get_metrics(),
             "performance": self.metrics.get_summary(),
-            "sla": {k: {"met": v.sla_met, "target": v.target_ms, "actual_p95": v.actual_p95_ms}
-                   for k, v in self.metrics.check_sla().items()},
+            "sla": {
+                k: {"met": v.sla_met, "target": v.target_ms, "actual_p95": v.actual_p95_ms}
+                for k, v in self.metrics.check_sla().items()
+            },
         }
 
     def reset_metrics(self) -> None:

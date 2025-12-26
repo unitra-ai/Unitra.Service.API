@@ -78,8 +78,7 @@ class TestConfigValues:
             <= TIER_CONFIGS[UserTier.PRO].max_batch_size
         )
         assert (
-            TIER_CONFIGS[UserTier.PRO].max_batch_size
-            <= TIER_CONFIGS[UserTier.BASIC].max_batch_size
+            TIER_CONFIGS[UserTier.PRO].max_batch_size <= TIER_CONFIGS[UserTier.BASIC].max_batch_size
         )
         assert (
             TIER_CONFIGS[UserTier.BASIC].max_batch_size

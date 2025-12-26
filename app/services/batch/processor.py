@@ -131,9 +131,7 @@ class BatchProcessor:
                 # Update metrics
                 self._total_batches += 1
                 self._total_requests += len(texts)
-                self._total_tokens += result.get("tokens_used", 0) or result.get(
-                    "total_tokens", 0
-                )
+                self._total_tokens += result.get("tokens_used", 0) or result.get("total_tokens", 0)
                 self._total_process_time_ms += process_time_ms
 
                 # Extract translations
@@ -239,9 +237,7 @@ class BatchProcessor:
             Dictionary with processor statistics
         """
         avg_process_time = (
-            self._total_process_time_ms / self._total_batches
-            if self._total_batches > 0
-            else 0
+            self._total_process_time_ms / self._total_batches if self._total_batches > 0 else 0
         )
         avg_batch_size = (
             self._total_requests / self._total_batches if self._total_batches > 0 else 0
@@ -256,9 +252,7 @@ class BatchProcessor:
             "avg_process_time_ms": round(avg_process_time, 2),
             "avg_batch_size": round(avg_batch_size, 2),
             "error_rate": (
-                round(self._total_errors / self._total_batches, 4)
-                if self._total_batches > 0
-                else 0
+                round(self._total_errors / self._total_batches, 4) if self._total_batches > 0 else 0
             ),
         }
 
