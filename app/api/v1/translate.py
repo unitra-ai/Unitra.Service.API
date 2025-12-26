@@ -310,9 +310,7 @@ async def translate(
 
     # Validate different languages
     if source_lang == target_lang:
-        raise InvalidLanguageError(
-            f"Source and target languages must be different: {source_lang}"
-        )
+        raise InvalidLanguageError(f"Source and target languages must be different: {source_lang}")
 
     # Estimate tokens (rough: 1 token per 4 characters)
     tokens_estimate = max(len(request.text) // 4, 10)
@@ -393,9 +391,7 @@ async def translate_batch(
     target_lang = normalize_language(request.target_lang)
 
     if source_lang == target_lang:
-        raise InvalidLanguageError(
-            f"Source and target languages must be different: {source_lang}"
-        )
+        raise InvalidLanguageError(f"Source and target languages must be different: {source_lang}")
 
     # Estimate total tokens
     total_chars = sum(len(t) for t in request.texts)

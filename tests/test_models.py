@@ -1,7 +1,5 @@
 """Tests for database models."""
 
-
-
 from app.models import (
     ProcessingLocation,
     RefreshToken,

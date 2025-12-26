@@ -602,9 +602,7 @@ async def test_batch_translate_with_mocked_mt_service() -> None:
         processing_mode="cloud",
     )
 
-    with patch.object(
-        MTClient, "translate_batch", new_callable=AsyncMock
-    ) as mock_translate:
+    with patch.object(MTClient, "translate_batch", new_callable=AsyncMock) as mock_translate:
         mock_translate.return_value = mock_result
 
         async with MTClient() as client:

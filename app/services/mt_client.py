@@ -162,9 +162,7 @@ class MTClient:
                 status_code=e.response.status_code,
                 error=str(e),
             )
-            raise MLServiceError(
-                f"Translation failed with status {e.response.status_code}"
-            ) from e
+            raise MLServiceError(f"Translation failed with status {e.response.status_code}") from e
         except httpx.RequestError as e:
             logger.error("translate_request_error", error=str(e))
             raise MLServiceError(f"Translation request failed: {e}") from e
@@ -263,9 +261,7 @@ class MTClient:
 
         except httpx.HTTPStatusError as e:
             logger.error("health_check_http_error", status_code=e.response.status_code)
-            raise MLServiceError(
-                f"Health check failed with status {e.response.status_code}"
-            ) from e
+            raise MLServiceError(f"Health check failed with status {e.response.status_code}") from e
         except httpx.RequestError as e:
             logger.error("health_check_request_error", error=str(e))
             raise MLServiceError(f"Health check request failed: {e}") from e

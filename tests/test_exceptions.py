@@ -1,6 +1,5 @@
 """Tests for custom exception classes."""
 
-
 from app.core.exceptions import (
     AccountInactiveError,
     AppException,

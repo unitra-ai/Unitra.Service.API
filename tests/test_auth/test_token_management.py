@@ -1,6 +1,5 @@
 """Tests for token management endpoints (logout with blacklist, refresh)."""
 
-
 import pytest
 from httpx import AsyncClient
 from jose import jwt
