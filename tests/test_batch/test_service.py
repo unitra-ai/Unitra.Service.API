@@ -17,7 +17,6 @@ import pytest
 from app.services.batch import (
     BatchTranslationService,
     UserTier,
-    TranslationError,
 )
 
 

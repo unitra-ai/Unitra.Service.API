@@ -13,7 +13,7 @@ from __future__ import annotations
 import statistics
 import time
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app.services.batch.config import TIER_CONFIGS, UserTier
 

@@ -271,7 +271,7 @@ class BatchProcessor:
             await self._client.aclose()
             self._client = None
 
-    async def __aenter__(self) -> "BatchProcessor":
+    async def __aenter__(self) -> BatchProcessor:
         """Enter async context manager."""
         return self
 

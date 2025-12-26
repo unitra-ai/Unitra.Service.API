@@ -279,7 +279,7 @@ class BatchTranslationService:
                 tier=tier.value,
                 timeout=timeout,
             )
-            raise asyncio.TimeoutError(f"Translation timed out after {timeout}s")
+            raise asyncio.TimeoutError(f"Translation timed out after {timeout}s") from None
 
     async def translate_batch(
         self,

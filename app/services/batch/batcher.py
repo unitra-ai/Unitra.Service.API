@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from app.services.batch.config import TIER_CONFIGS, UserTier
+from app.services.batch.config import TIER_CONFIGS
 from app.services.batch.queue import TranslationQueue, TranslationRequest
 
 if TYPE_CHECKING:
@@ -236,7 +236,7 @@ class SmartBatcher:
             result = await self.process_batch(batch)
 
             # Distribute results to waiting futures
-            for request, translation in zip(result.requests, result.translations):
+            for request, translation in zip(result.requests, result.translations, strict=True):
                 if not request.future.done():
                     request.future.set_result(
                         {

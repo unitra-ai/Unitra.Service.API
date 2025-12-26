@@ -7,7 +7,6 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-
 # =============================================================================
 # Language Endpoint Tests
 # =============================================================================

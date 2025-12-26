@@ -282,7 +282,7 @@ class TestTierPrioritization:
 
             async def timed_translate(tier: UserTier) -> tuple[UserTier, float]:
                 start = time.time()
-                results = await asyncio.gather(
+                await asyncio.gather(
                     *[
                         service.translate(
                             text=t,

@@ -6,8 +6,6 @@ Test cases:
 3. Tier string conversion
 """
 
-import pytest
-
 from app.services.batch.config import (
     TIER_CONFIGS,
     TierConfig,
@@ -39,20 +37,20 @@ class TestConfigValues:
 
     def test_batch_sizes_valid(self) -> None:
         """Batch sizes should be valid."""
-        for tier, config in TIER_CONFIGS.items():
+        for _tier, config in TIER_CONFIGS.items():
             assert config.min_batch_size > 0
             assert config.max_batch_size >= config.min_batch_size
             assert config.max_batch_size <= 64  # Reasonable upper limit
 
     def test_wait_times_valid(self) -> None:
         """Wait times should be positive and reasonable."""
-        for tier, config in TIER_CONFIGS.items():
+        for _tier, config in TIER_CONFIGS.items():
             assert config.max_wait_ms > 0
             assert config.max_wait_ms <= 1000  # Max 1 second
 
     def test_target_latency_valid(self) -> None:
         """Target latencies should be positive and reasonable."""
-        for tier, config in TIER_CONFIGS.items():
+        for _tier, config in TIER_CONFIGS.items():
             assert config.target_latency_ms > 0
             assert config.target_latency_ms <= 500  # Max 500ms
 

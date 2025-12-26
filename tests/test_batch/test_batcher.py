@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.services.batch.batcher import SmartBatcher, BatchResult
+from app.services.batch.batcher import SmartBatcher
 from app.services.batch.config import TIER_CONFIGS, UserTier
 from app.services.batch.processor import BatchProcessor
 from app.services.batch.queue import TranslationQueue, TranslationRequest
@@ -258,7 +258,7 @@ class TestResultDistribution:
             requests.append(req)
 
         # Process should raise
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="Translation failed"):
             await batcher.collect_and_process()
 
         # Each future should have the exception

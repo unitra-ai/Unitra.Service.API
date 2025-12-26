@@ -1,7 +1,7 @@
 """JWT Authentication backend for FastAPI-Users."""
 
 import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends

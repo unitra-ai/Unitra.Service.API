@@ -9,6 +9,7 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.backend import current_user
 from app.auth.models import User
@@ -22,8 +23,7 @@ from app.core.limits import Tier, get_tier_limits
 from app.db.redis import RedisClient, get_redis_client
 from app.db.session import get_db_session
 from app.models.usage import ProcessingLocation, UsageLog
-from app.services.mt_client import MTClient, get_mt_client
-from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.mt_client import MTClient
 
 logger = structlog.get_logger(__name__)
 
