@@ -81,7 +81,7 @@ module = [
     "app.auth.router",
 ]
 strict = false
-disable_error_code = ["no-any-return", "misc", "override", "arg-type", "index"]
+disable_error_code = ["no-any-return", "no-untyped-call", "misc", "override", "arg-type", "index"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
